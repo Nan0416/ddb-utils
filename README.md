@@ -1,7 +1,5 @@
 # ddb-utils
 
-3. Update jest.config.js suiteName to package name.
-
 ![release workflow](https://github.com/Nan0416/ddb-utils/actions/workflows/release.yml/badge.svg)
 
 ![Latest PR workflow](https://github.com/Nan0416/ddb-utils/actions/workflows/pr.yml/badge.svg)
@@ -9,16 +7,49 @@
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
 
-## Setup Permission
+## Example
 
-The goal is to set up a github workflow that automaitcally builds and publishes the library artifact to the public npm repo when the code is merged into "main" branch. 
+```ts
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
+import { UpdateExpressionBuilder } from '@ultrasa/ddb-utils';
 
-You don't need to configure permission to download package. However, to publish package, you will need to manually create an npm token, and save it into the github action.
+const docClient: DynamoDBDocument;
+const updateExpressionBuilder = new UpdateExpressionBuilder();
 
-### Step 1. Create NPM token.
+updateExpressionBuilder.set('active', true).set('lastUpdatedAt', '2025-04-28T10:00:00Z').set('version', 'qoe38');
+const conditional = updateExpressionBuilder.conditionExpressionBuilder;
+const condition = conditional.and(conditional.attribute_exists('accountId'), conditional.equal('version', 'j893w'));
+const expression = updateExpressionBuilder.build();
 
-1. Go to https://www.npmjs.com/settings/{username}/tokens, choose "Classic Token", and select "Automation". Take a note on the generate token.
+docClient.update({
+    TableName: '{YourTablename}',
+    Key: {
+        'accountId': '123,
+    },
+    UpdateExpression: expression.updateExpression,
+    ExpressionAttributeNames: expression.expressionAttributeNames,
+    ExpressionAttributeValues: expression.expressionAttributeValues,
+    ConditionExpression: condition.expression
+});
+```
 
-> To make it easy manage, name the token as "For {git repo name}".
+The update expression sent to DynamoDB is equivalent to 
 
-2. Go to the github repo, "Settings" > "Secrets and variables" > "Actions" > Click "New repositoty secret". Set token name as "NPM_TOKEN" and paste the token generated from npm. 
+```JSON
+{
+    "UpdateExpression": "SET #a0 = :v0, #a1 = :v1, #a2 = :v2",
+    "ExpressionAttributeNames": {
+        "#a0": "active",
+        "#a1": "lastUpdatedAt",
+        "#a2": "version",
+        "#a3": "accountId"
+    },
+        "ExpressionAttributeValues": {
+        ":v0": true,
+        ":v1": "2025-04-28T10:00:00Z",
+        ":v2": "qoe38",
+        ":v3": "j893w"
+    },
+    "ConditionExpression": "(attribute_exists(#a3)) AND (#a2 = :v3)"
+}
+```
