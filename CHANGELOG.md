@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Nan0416/ddb-utils/compare/v1.0.0...v1.1.0) (2025-04-28)
+
+
+### Features
+
+* **repo:** mark library as public in npm ([#3](https://github.com/Nan0416/ddb-utils/issues/3)) ([a81d188](https://github.com/Nan0416/ddb-utils/commit/a81d188c5437c4548f8fbad82ea05aa56000b6dc))
+
 # 1.0.0 (2025-04-28)
 
 
