@@ -24,7 +24,7 @@ const expression = updateExpressionBuilder.build();
 docClient.update({
     TableName: '{YourTablename}',
     Key: {
-        'accountId': '123,
+        'accountId': '123'
     },
     UpdateExpression: expression.updateExpression,
     ExpressionAttributeNames: expression.expressionAttributeNames,
