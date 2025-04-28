@@ -19,7 +19,7 @@ module.exports = {
   reporters: [
     'default',
     ['jest-junit', {
-      suiteName: '{package}',
+      suiteName: 'ddb-utils-unittest',
       outputDirectory: 'reports/test-reports',
       outputName: 'junit.xml'
     }]

@@ -1,6 +1,6 @@
 {
-  "name": "@sparrow/{package}",
-  "version": "0.0.0",
+  "name": "@ultrasa/ddb-utils",
+  "version": "1.0.0",
   "description": "",
   "main": "dist/lib/index.js",
   "types": "dist/types/index.d.ts",
@@ -15,12 +15,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sparrow2024/{package}.git"
+    "url": "git+https://github.com/Nan0416/ddb-utils.git"
   },
   "bugs": {
-    "url": "https://github.com/sparrow2024/{package}/issues"
+    "url": "https://github.com/Nan0416/ddb-utils/issues"
   },
-  "homepage": "https://github.com/sparrow2024/{package}.git#readme",
+  "homepage": "https://github.com/Nan0416/ddb-utils.git#readme",
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
