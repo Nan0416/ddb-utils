@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Nan0416/ddb-utils/compare/v1.1.0...v1.2.0) (2025-04-28)
+
+
+### Features
+
+* **impl:** implement ddb update expression ([#4](https://github.com/Nan0416/ddb-utils/issues/4)) ([892aa8b](https://github.com/Nan0416/ddb-utils/commit/892aa8bf1be703aababe394cab7be736bc98521b))
+
 # [1.1.0](https://github.com/Nan0416/ddb-utils/compare/v1.0.0...v1.1.0) (2025-04-28)
 
 
