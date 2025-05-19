@@ -16,6 +16,12 @@
     "format:lint": "prettier --check \"(src|tests)/**/*.(js|ts|jsx|tsx)\" release.config.js",
     "release:dryrun": "semantic-release --dry-run"
   },
+  "keywords": [
+    "aws",
+    "dynamodb",
+    "update expression",
+    "projection expression"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Nan0416/ddb-utils.git"
