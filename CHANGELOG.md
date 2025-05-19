@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/Nan0416/ddb-utils/compare/v1.2.0...v1.3.0) (2025-05-19)
+
+
+### Features
+
+* **projection:** support projection expression ([#5](https://github.com/Nan0416/ddb-utils/issues/5)) ([7321f58](https://github.com/Nan0416/ddb-utils/commit/7321f58087cb9ee409e109dc60349b2a37f39277))
+
 # [1.2.0](https://github.com/Nan0416/ddb-utils/compare/v1.1.0...v1.2.0) (2025-04-28)
 
 
