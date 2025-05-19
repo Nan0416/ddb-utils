@@ -1,5 +1,5 @@
 import type { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
-import { AttributeSession } from './attribute-session';
+import { AttributeNameSession, AttributeValueSession } from './attribute-session';
 import { ConditionExpressionBuilder } from './condition-expression-builder';
 import { InvalidDynamoDbUpdateRequestError } from './errors';
 
@@ -12,16 +12,18 @@ export interface UpdateExpression {
 export class UpdateExpressionBuilder {
   private readonly setStatements: string[];
   private readonly removeStatements: string[];
-  private readonly attributeSession: AttributeSession;
+  private readonly attributeNameSession: AttributeNameSession;
+  private readonly attributeValueSession: AttributeValueSession;
   readonly conditionExpressionBuilder: ConditionExpressionBuilder;
   private visitedPaths: Set<string>;
 
   constructor() {
     this.setStatements = [];
     this.removeStatements = [];
-    this.attributeSession = new AttributeSession();
+    this.attributeNameSession = new AttributeNameSession();
+    this.attributeValueSession = new AttributeValueSession();
     this.visitedPaths = new Set();
-    this.conditionExpressionBuilder = new ConditionExpressionBuilder(this.attributeSession);
+    this.conditionExpressionBuilder = new ConditionExpressionBuilder(this.attributeNameSession, this.attributeValueSession);
   }
 
   set(path: string | ReadonlyArray<string>, value: any): UpdateExpressionBuilder {
@@ -57,14 +59,14 @@ export class UpdateExpressionBuilder {
     const attributeNameIdentifiers: string[] = [];
 
     path.forEach((segment) => {
-      const attributeNameIdentifier = this.attributeSession.provideAttributeNameIdentifier(segment);
+      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(segment);
       attributeNameIdentifiers.push(attributeNameIdentifier);
     });
 
     if (value === null) {
       this.removeStatements.push(attributeNameIdentifiers.join('.'));
     } else {
-      const valueIdentifier = this.attributeSession.provideAttributeValueIdentifier(value);
+      const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(value);
       // if this is a nested path, ensure the top level exist before setting the value. Otherwise, it will throw
       // ValidationException: The document path provided in the update expression is invalid for update.
       this.setStatements.push(`${attributeNameIdentifiers.join('.')} = ${valueIdentifier}`);
@@ -91,8 +93,8 @@ export class UpdateExpressionBuilder {
 
     return {
       updateExpression: statements.join(' '),
-      expressionAttributeValues: this.attributeSession.expressionAttributeValues,
-      expressionAttributeNames: this.attributeSession.expressionAttributeNames,
+      expressionAttributeValues: this.attributeValueSession.expressionAttributeValues,
+      expressionAttributeNames: this.attributeNameSession.expressionAttributeNames,
     };
   }
 }

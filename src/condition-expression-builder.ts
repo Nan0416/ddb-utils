@@ -1,14 +1,16 @@
-import { AttributeSession } from './attribute-session';
+import { AttributeNameSession, AttributeValueSession } from './attribute-session';
 
 export interface Condition {
   readonly expression: string;
 }
 
 export class ConditionExpressionBuilder {
-  private readonly attributeManager: AttributeSession;
+  private readonly attributeNameManager: AttributeNameSession;
+  private readonly attributeValueManager: AttributeValueSession;
 
-  constructor(attributeManager: AttributeSession) {
-    this.attributeManager = attributeManager;
+  constructor(attributeNameManager: AttributeNameSession, attributeValueManager: AttributeValueSession) {
+    this.attributeNameManager = attributeNameManager;
+    this.attributeValueManager = attributeValueManager;
   }
 
   attribute_exists(path: string | string[]): Condition {
@@ -20,7 +22,7 @@ export class ConditionExpressionBuilder {
     }
     const attributeNameIdentifiers: string[] = [];
     segments.forEach((segment) => {
-      const attributeNameIdentifier = this.attributeManager.provideAttributeNameIdentifier(segment);
+      const attributeNameIdentifier = this.attributeNameManager.provideAttributeNameIdentifier(segment);
       attributeNameIdentifiers.push(attributeNameIdentifier);
     });
     return {
@@ -42,10 +44,10 @@ export class ConditionExpressionBuilder {
       segments = path;
     }
 
-    const valueIdentifier = this.attributeManager.provideAttributeValueIdentifier(value);
+    const valueIdentifier = this.attributeValueManager.provideAttributeValueIdentifier(value);
     const attributeNameIdentifiers: string[] = [];
     segments.forEach((segment) => {
-      const attributeNameIdentifier = this.attributeManager.provideAttributeNameIdentifier(segment);
+      const attributeNameIdentifier = this.attributeNameManager.provideAttributeNameIdentifier(segment);
       attributeNameIdentifiers.push(attributeNameIdentifier);
     });
 

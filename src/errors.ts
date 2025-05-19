@@ -5,6 +5,12 @@ export class InvalidDynamoDbUpdateRequestError extends Error {
   }
 }
 
+export class InvalidDynamoDbProjectionRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export class AttributeSessionFinalizedError extends Error {
   constructor(message: string) {
     super(message);

@@ -2,22 +2,18 @@ import type { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
 import { AttributeSessionFinalizedError } from './errors';
 
 /**
- * Manage attribute name and attribute value.
+ * Manage attribute names.
  */
-export class AttributeSession {
+export class AttributeNameSession {
   // map between segment to attribute name. e.g. position => #1, AAPL => #2, size => #3.
   private readonly attributeNameToIdentifier: Map<string, string>;
-  private readonly _expressionAttributeValues: Record<string, NativeAttributeValue>;
 
   private attributeNameCount: number;
-  private attributeValueCount: number;
   private isFinalized: boolean;
 
   constructor() {
     this.attributeNameToIdentifier = new Map();
-    this._expressionAttributeValues = {};
     this.attributeNameCount = 0;
-    this.attributeValueCount = 0;
     this.isFinalized = false;
   }
 
@@ -34,16 +30,6 @@ export class AttributeSession {
     return identifier;
   }
 
-  provideAttributeValueIdentifier(value: NativeAttributeValue): string {
-    if (this.isFinalized) {
-      throw new AttributeSessionFinalizedError('attribute names and values have been finalized.');
-    }
-    const identifier = `:v${this.attributeValueCount}`;
-    this.attributeValueCount += 1;
-    this._expressionAttributeValues[identifier] = value;
-    return identifier;
-  }
-
   get expressionAttributeNames(): Record<string, string> {
     this.isFinalized = true;
     const identifierToAttributeName: Record<string, string> = {};
@@ -53,6 +39,32 @@ export class AttributeSession {
     });
 
     return identifierToAttributeName;
+  }
+}
+
+/**
+ * Manage attribute values.
+ */
+export class AttributeValueSession {
+  private readonly _expressionAttributeValues: Record<string, NativeAttributeValue>;
+
+  private attributeValueCount: number;
+  private isFinalized: boolean;
+
+  constructor() {
+    this._expressionAttributeValues = {};
+    this.attributeValueCount = 0;
+    this.isFinalized = false;
+  }
+
+  provideAttributeValueIdentifier(value: NativeAttributeValue): string {
+    if (this.isFinalized) {
+      throw new AttributeSessionFinalizedError('attribute names and values have been finalized.');
+    }
+    const identifier = `:v${this.attributeValueCount}`;
+    this.attributeValueCount += 1;
+    this._expressionAttributeValues[identifier] = value;
+    return identifier;
   }
 
   get expressionAttributeValues(): Record<string, NativeAttributeValue> {

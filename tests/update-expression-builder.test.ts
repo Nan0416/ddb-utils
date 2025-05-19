@@ -104,16 +104,4 @@ describe('update-expression-builder-test', () => {
     expect(expression).toEqual(expectedUpdateExpression);
     expect(condition.expression).toEqual('(attribute_exists(#a0)) AND (attribute_exists(#a1.#a4))');
   });
-
-  test('ss', () => {
-    const updateExpressionBuilder = new UpdateExpressionBuilder();
-
-    updateExpressionBuilder.set('active', true).set('lastUpdatedAt', '2025-04-28T10:00:00Z').set('version', 'qoe38');
-    const conditional = updateExpressionBuilder.conditionExpressionBuilder;
-    const condition = conditional.and(conditional.attribute_exists('accountId'), conditional.equal('version', 'j893w'));
-    const expression = updateExpressionBuilder.build();
-
-    console.log(JSON.stringify(expression, null, 2));
-    console.log(condition.expression);
-  });
 });
