@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/Nan0416/ddb-utils/compare/v1.3.0...v1.4.0) (2025-05-25)
+
+
+### Features
+
+* **list_append:** support list append; add examples ([#6](https://github.com/Nan0416/ddb-utils/issues/6)) ([d919420](https://github.com/Nan0416/ddb-utils/commit/d919420824ca89ab978df76ee9ac665699997c92))
+
 # [1.3.0](https://github.com/Nan0416/ddb-utils/compare/v1.2.0...v1.3.0) (2025-05-19)
 
 
