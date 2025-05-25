@@ -104,4 +104,29 @@ describe('update-expression-builder-test', () => {
     expect(expression).toEqual(expectedUpdateExpression);
     expect(condition.expression).toEqual('(attribute_exists(#a0)) AND (attribute_exists(#a1.#a4))');
   });
+
+  test('append list', () => {
+    updateExpressionBuilder.list_append('list', {
+      public: true,
+      'release-date': '2024-10-10',
+    });
+    const expression = updateExpressionBuilder.build();
+
+    const expectedUpdateExpression: UpdateExpression = {
+      updateExpression: 'SET #a0 = list_append(if_not_exists(#a0, :v1), :v0)',
+      expressionAttributeValues: {
+        ':v0': [
+          {
+            public: true,
+            'release-date': '2024-10-10',
+          },
+        ],
+        ':v1': [],
+      },
+      expressionAttributeNames: {
+        '#a0': 'list',
+      },
+    };
+    expect(expression).toEqual(expectedUpdateExpression);
+  });
 });
