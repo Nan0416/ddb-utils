@@ -12,8 +12,8 @@
     "build": "tsc",
     "test": "npm run test:unit",
     "test:unit": "jest --config jest.config.js",
-    "format:fix": "prettier --write \"(src|tests)/**/*.(js|ts|jsx|tsx)\" release.config.js",
-    "format:lint": "prettier --check \"(src|tests)/**/*.(js|ts|jsx|tsx)\" release.config.js",
+    "format:fix": "prettier --write \"(src|tests|examples)/**/*.(js|ts|jsx|tsx)\" release.config.js",
+    "format:lint": "prettier --check \"(src|tests|examples)/**/*.(js|ts|jsx|tsx)\" release.config.js",
     "release:dryrun": "semantic-release --dry-run"
   },
   "keywords": [
@@ -31,11 +31,15 @@
   },
   "homepage": "https://github.com/Nan0416/ddb-utils.git#readme",
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.817.0",
+    "@aws-sdk/credential-providers": "^3.817.0",
+    "@aws-sdk/lib-dynamodb": "^3.817.0",
     "@aws-sdk/util-dynamodb": "^3.798.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.26",
+    "dotenv": "^16.5.0",
     "jest": "^29.7.0",
     "jest-junit": "^16.0.0",
     "prettier": "^3.2.5",

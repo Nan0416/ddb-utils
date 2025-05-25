@@ -53,3 +53,18 @@ The update expression sent to DynamoDB is equivalent to
     "ConditionExpression": "(attribute_exists(#a3)) AND (#a2 = :v3)"
 }
 ```
+
+## How to run examples
+
+1. Define two environment variables. The project uses [dotenv](https://www.npmjs.com/package/dotenv) to load environment variables from a `.env` file.
+
+In the project root directory, create `.env` file with two variables
+
+```
+# We use SSO to provision aws credentials. If SSO is not enabled in the AWS account, you have to modify the examples code to replace the credentials logic.
+# Run `aws configure sso --profile {YourProfileName}` to configure the profile, and run `aws sso login --profile {YourProfileName}` to load credentials.
+SSO_PROFILE_NAME=sparrow-dev
+
+# First, create a test table in AWS DDB with partition key column name as "partitionKey" and sort key column name sa "sortKey"
+TABLE_NAME=DdbUtilsDevTable
+```
