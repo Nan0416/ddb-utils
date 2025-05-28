@@ -6,7 +6,7 @@ import { InvalidDynamoDbUpdateRequestError } from './errors';
 export interface UpdateExpression {
   readonly updateExpression: string;
   readonly expressionAttributeValues: Record<string, NativeAttributeValue>;
-  readonly expressionAttributeNames?: Record<string, string>;
+  readonly expressionAttributeNames: Record<string, string>;
 }
 
 interface _Operation {
@@ -64,7 +64,7 @@ export class UpdateExpressionBuilder {
    * @param failIfMissing @default false
    * @returns
    */
-  list_append(path: string | ReadonlyArray<string>, value: NativeAttributeValue, position?: 'start' | 'end', failIfMissing?: boolean) {
+  append(path: string | ReadonlyArray<string>, value: NativeAttributeValue, position?: 'start' | 'end', failIfMissing?: boolean) {
     return this.with(path, {
       type: 'list_append',
       value: value,

@@ -11,9 +11,9 @@ export class ProjectionExpressionBuilder {
   private readonly attributeNameSession: AttributeNameSession;
   private visitedPaths: Set<string>;
 
-  constructor() {
+  constructor(attributeNameSession?: AttributeNameSession) {
     this.expressions = [];
-    this.attributeNameSession = new AttributeNameSession();
+    this.attributeNameSession = attributeNameSession ?? new AttributeNameSession();
     this.visitedPaths = new Set();
   }
 

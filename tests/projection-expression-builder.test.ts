@@ -1,12 +1,6 @@
-import { InvalidDynamoDbProjectionRequestError, ProjectionExpression, ProjectionExpressionBuilder, UpdateExpression, UpdateExpressionBuilder } from '../src';
+import { InvalidDynamoDbProjectionRequestError, ProjectionExpression, ProjectionExpressionBuilder } from '../src';
 
 describe('update-expression-builder-test', () => {
-  const ACCOUNT_ID = 'mockAccountId';
-  const LAST_UPDATED_AT = 'mockUpdatedAt';
-  const NEW_VERSION = 'newVersion';
-  const OLD_VERSION = 'oldVersion';
-  const DATA = { k1: 'v1', k2: 'v2' };
-
   let projectionExpressionBuilder: ProjectionExpressionBuilder;
 
   beforeEach(() => {

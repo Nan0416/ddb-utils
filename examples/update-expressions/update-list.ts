@@ -26,7 +26,7 @@ export async function demo(docClient: DynamoDBDocument, tableName: string) {
   });
 
   const updateExpressionBuilder = new UpdateExpressionBuilder();
-  updateExpressionBuilder.list_append(Columns.LIST_COL, {
+  updateExpressionBuilder.append(Columns.LIST_COL, {
     public: true,
     'release-date': '2024-10-10',
   });
@@ -53,7 +53,7 @@ export async function demo(docClient: DynamoDBDocument, tableName: string) {
 
 (async () => {
   const docClient = buildDdbClient({
-    region: 'us-east-1',
+    region: getenv('AWS_REGION'),
     credentials: fromSSO({ profile: getenv('SSO_PROFILE_NAME') }),
   });
 

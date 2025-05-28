@@ -49,7 +49,7 @@ describe('update-expression-builder-test', () => {
   test('update two properties with condition', () => {
     updateExpressionBuilder.set('accountId', ACCOUNT_ID).set('lastUpdatedAt', LAST_UPDATED_AT).set('version', NEW_VERSION);
     const conditional = updateExpressionBuilder.conditionExpressionBuilder;
-    const condition = conditional.and(conditional.attribute_exists('accountId'), conditional.equal('version', OLD_VERSION));
+    const condition = conditional.and(conditional.attributeExists('accountId'), conditional.equal('version', OLD_VERSION));
 
     const expression = updateExpressionBuilder.build();
 
@@ -76,14 +76,14 @@ describe('update-expression-builder-test', () => {
 
     expect(() => {
       const conditional = updateExpressionBuilder.conditionExpressionBuilder;
-      conditional.and(conditional.attribute_exists('accountId'), conditional.equal('version', OLD_VERSION));
+      conditional.and(conditional.attributeExists('accountId'), conditional.equal('version', OLD_VERSION));
     }).toThrow(AttributeSessionFinalizedError);
   });
 
   test('with nested data structure', () => {
     updateExpressionBuilder.set('accountId', ACCOUNT_ID).set(['timestamp', 'lastUpdatedAt'], LAST_UPDATED_AT).set('data', DATA);
     const conditional = updateExpressionBuilder.conditionExpressionBuilder;
-    const condition = conditional.and(conditional.attribute_exists('accountId'), conditional.attribute_exists(['timestamp', 'createdAt']));
+    const condition = conditional.and(conditional.attributeExists('accountId'), conditional.attributeExists(['timestamp', 'createdAt']));
     const expression = updateExpressionBuilder.build();
 
     const expectedUpdateExpression: UpdateExpression = {
@@ -106,7 +106,7 @@ describe('update-expression-builder-test', () => {
   });
 
   test('append list', () => {
-    updateExpressionBuilder.list_append('list', {
+    updateExpressionBuilder.append('list', {
       public: true,
       'release-date': '2024-10-10',
     });
