@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/Nan0416/ddb-utils/compare/v1.4.0...v1.5.0) (2025-05-28)
+
+
+### Features
+
+* **query:** support query expression ([#7](https://github.com/Nan0416/ddb-utils/issues/7)) ([1bc3af2](https://github.com/Nan0416/ddb-utils/commit/1bc3af2457c0cb23b02b5b51d3536170d0225f17))
+
 # [1.4.0](https://github.com/Nan0416/ddb-utils/compare/v1.3.0...v1.4.0) (2025-05-25)
 
 
