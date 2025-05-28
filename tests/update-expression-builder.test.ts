@@ -106,7 +106,7 @@ describe('update-expression-builder-test', () => {
   });
 
   test('append list', () => {
-    updateExpressionBuilder.list_append('list', {
+    updateExpressionBuilder.append('list', {
       public: true,
       'release-date': '2024-10-10',
     });
