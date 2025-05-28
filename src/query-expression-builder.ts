@@ -139,7 +139,7 @@ export class QueryExpressionBuilder {
       const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(this.sortKeyColumnName);
       const greaterThanOrEqualToAttributeValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.greaterThanOrEqualTo);
       const lessThanOrEqualToAttributeValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.lessThanOrEqualTo);
-      this.sortKeyCondition = `${attributeNameIdentifier} BETWEEN ${greaterThanOrEqualToAttributeValueIdentifier} AND ${lessThanOrEqualToAttributeValueIdentifier}`;
+      this.sortKeyCondition = `(${attributeNameIdentifier} BETWEEN ${greaterThanOrEqualToAttributeValueIdentifier} AND ${lessThanOrEqualToAttributeValueIdentifier})`;
     } else if (op.type === 'begins_with') {
       // two operands
       const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(this.sortKeyColumnName);
