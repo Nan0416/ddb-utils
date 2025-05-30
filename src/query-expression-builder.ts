@@ -1,6 +1,6 @@
 import type { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
 import { AttributeNameSession, AttributeValueSession } from './attribute-session';
-import { InvalidDynamoDbQueryRequestError, InvalidDynamoDbUpdateRequestError, QueryConditionConflictError } from './errors';
+import { InvalidDynamoDbQueryRequestError, QueryConditionConflictError } from './errors';
 import { ProjectionExpressionBuilder } from './projection-expression-builder';
 import { ConditionExpressionBuilder } from './condition-expression-builder';
 
@@ -13,6 +13,7 @@ export interface QueryExpression {
 
 interface _Condition {
   readonly type: '=' | '<' | '<=' | '>' | '>=' | 'between' | 'begins_with';
+  readonly sortKeyColumnName: string;
 }
 
 interface TwoOperandsCondition extends _Condition {
@@ -39,65 +40,66 @@ export class QueryExpressionBuilder {
   private partitionKeyCondition?: string;
   private sortKeyCondition?: string;
 
-  private readonly partitionKeyColumnName: string;
-  private readonly sortKeyColumnName?: string;
-  constructor(partitionKeyColumnName: string, sortKeyColumnName?: string) {
-    this.partitionKeyColumnName = partitionKeyColumnName;
-    this.sortKeyColumnName = sortKeyColumnName;
-
+  constructor() {
     this.attributeNameSession = new AttributeNameSession();
     this.attributeValueSession = new AttributeValueSession();
     this.projectionExpressionBuilder = new ProjectionExpressionBuilder(this.attributeNameSession);
     this.filterExpressionBuilder = new ConditionExpressionBuilder(this.attributeNameSession, this.attributeValueSession);
   }
 
-  key(value: NativeAttributeValue): QueryExpressionBuilder {
+  key(partitionKeyColumnName: string, value: NativeAttributeValue): QueryExpressionBuilder {
     if (typeof this.partitionKeyCondition === 'string') {
       throw new QueryConditionConflictError('Query partition key is already defined.');
     }
-    const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(this.partitionKeyColumnName);
+    const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(partitionKeyColumnName);
     const attributeValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(value);
     this.partitionKeyCondition = `${attributeNameIdentifier} = ${attributeValueIdentifier}`;
     return this;
   }
 
-  lessThan(value: NativeAttributeValue): QueryExpressionBuilder {
+  lessThan(sortKeyColumnName: string, value: NativeAttributeValue): QueryExpressionBuilder {
     return this.withSortKeyCondition({
+      sortKeyColumnName: sortKeyColumnName,
       type: '<',
       valueOperand: value,
     });
   }
 
-  lessThanOrEqualTo(value: NativeAttributeValue): QueryExpressionBuilder {
+  lessThanOrEqualTo(sortKeyColumnName: string, value: NativeAttributeValue): QueryExpressionBuilder {
     return this.withSortKeyCondition({
+      sortKeyColumnName: sortKeyColumnName,
       type: '<=',
       valueOperand: value,
     });
   }
 
-  equal(value: NativeAttributeValue): QueryExpressionBuilder {
+  equal(sortKeyColumnName: string, value: NativeAttributeValue): QueryExpressionBuilder {
     return this.withSortKeyCondition({
+      sortKeyColumnName: sortKeyColumnName,
       type: '=',
       valueOperand: value,
     });
   }
 
-  greaterThan(value: NativeAttributeValue): QueryExpressionBuilder {
+  greaterThan(sortKeyColumnName: string, value: NativeAttributeValue): QueryExpressionBuilder {
     return this.withSortKeyCondition({
+      sortKeyColumnName: sortKeyColumnName,
       type: '>',
       valueOperand: value,
     });
   }
 
-  greaterThanOrEqualTo(value: NativeAttributeValue): QueryExpressionBuilder {
+  greaterThanOrEqualTo(sortKeyColumnName: string, value: NativeAttributeValue): QueryExpressionBuilder {
     return this.withSortKeyCondition({
+      sortKeyColumnName: sortKeyColumnName,
       type: '>=',
       valueOperand: value,
     });
   }
 
-  beginsWith(value: NativeAttributeValue): QueryExpressionBuilder {
+  beginsWith(sortKeyColumnName: string, value: NativeAttributeValue): QueryExpressionBuilder {
     return this.withSortKeyCondition({
+      sortKeyColumnName: sortKeyColumnName,
       type: 'begins_with',
       valueOperand: value,
     });
@@ -113,8 +115,9 @@ export class QueryExpressionBuilder {
    * @param right inclusive
    * @returns
    */
-  between(left: NativeAttributeValue, right: NativeAttributeValue): QueryExpressionBuilder {
+  between(sortKeyColumnName: string, left: NativeAttributeValue, right: NativeAttributeValue): QueryExpressionBuilder {
     return this.withSortKeyCondition({
+      sortKeyColumnName: sortKeyColumnName,
       type: 'between',
       greaterThanOrEqualTo: left,
       lessThanOrEqualTo: right,
@@ -130,24 +133,21 @@ export class QueryExpressionBuilder {
     if (typeof this.sortKeyCondition === 'string') {
       throw new QueryConditionConflictError('Query sort key is already defined.');
     }
-    if (typeof this.sortKeyColumnName !== 'string') {
-      throw new InvalidDynamoDbQueryRequestError("Can't use sort key condition without providing a sort key column.");
-    }
 
     if (op.type === 'between') {
       // two operands
-      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(this.sortKeyColumnName);
+      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(op.sortKeyColumnName);
       const greaterThanOrEqualToAttributeValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.greaterThanOrEqualTo);
       const lessThanOrEqualToAttributeValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.lessThanOrEqualTo);
       this.sortKeyCondition = `(${attributeNameIdentifier} BETWEEN ${greaterThanOrEqualToAttributeValueIdentifier} AND ${lessThanOrEqualToAttributeValueIdentifier})`;
     } else if (op.type === 'begins_with') {
       // two operands
-      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(this.sortKeyColumnName);
+      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(op.sortKeyColumnName);
       const attributeValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.valueOperand);
       this.sortKeyCondition = `begins_with(${attributeNameIdentifier}, ${attributeValueIdentifier})`;
     } else {
       // two operands
-      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(this.sortKeyColumnName);
+      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(op.sortKeyColumnName);
       const attributeValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.valueOperand);
       this.sortKeyCondition = `${attributeNameIdentifier} ${op.type} ${attributeValueIdentifier}`;
     }

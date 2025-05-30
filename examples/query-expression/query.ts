@@ -26,7 +26,7 @@ export async function demo(docClient: DynamoDBDocument, tableName: string) {
   //   });
   // }
 
-  const queryExpressionBuilder = new QueryExpressionBuilder(Columns.PARTITION_KEY_COL, Columns.SORT_KEY_COL).key('ddb-utils').between('v_0146', 'v_0153').project('sortKey').project('mydata');
+  const queryExpressionBuilder = new QueryExpressionBuilder().key(Columns.PARTITION_KEY_COL, 'ddb-utils').between(Columns.SORT_KEY_COL, 'v_0146', 'v_0153').project('sortKey').project('mydata');
 
   const fitlering = queryExpressionBuilder.filterExpressionBuilder;
   const filter = fitlering.not(fitlering.and(fitlering.greaterThan('mydata', 0.2), fitlering.lessThan('mydata', 0.8)));
