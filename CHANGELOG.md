@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/Nan0416/ddb-utils/compare/v1.5.0...v1.6.0) (2025-05-30)
+
+
+### Features
+
+* **model:** move partition key and sort key to method input in query expression builder; add gsi test ([#8](https://github.com/Nan0416/ddb-utils/issues/8)) ([ace78d3](https://github.com/Nan0416/ddb-utils/commit/ace78d3b73d6ca03e8282aa3d6b7069028a2d6e9))
+
 # [1.5.0](https://github.com/Nan0416/ddb-utils/compare/v1.4.0...v1.5.0) (2025-05-28)
 
 
