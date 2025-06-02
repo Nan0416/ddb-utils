@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/Nan0416/ddb-utils/compare/v1.6.0...v1.7.0) (2025-06-02)
+
+
+### Features
+
+* **conditional:** provide conditional default attribute names and va… ([#9](https://github.com/Nan0416/ddb-utils/issues/9)) ([c9e61d6](https://github.com/Nan0416/ddb-utils/commit/c9e61d6bd16ae241622b56adb1e2f3175186eb53))
+
 # [1.6.0](https://github.com/Nan0416/ddb-utils/compare/v1.5.0...v1.6.0) (2025-05-30)
 
 
