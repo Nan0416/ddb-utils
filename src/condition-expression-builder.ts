@@ -36,9 +36,17 @@ export class ConditionExpressionBuilder {
   private readonly attributeNameSession: AttributeNameSession;
   private readonly attributeValueSession: AttributeValueSession;
 
-  constructor(attributeNameSession: AttributeNameSession, attributeValueSession: AttributeValueSession) {
-    this.attributeNameSession = attributeNameSession;
-    this.attributeValueSession = attributeValueSession;
+  constructor(attributeNameSession?: AttributeNameSession, attributeValueSession?: AttributeValueSession) {
+    this.attributeNameSession = attributeNameSession ?? new AttributeNameSession();
+    this.attributeValueSession = attributeValueSession ?? new AttributeValueSession();
+  }
+
+  get expressionAttributeNames(): Record<string, string> {
+    return this.attributeNameSession.expressionAttributeNames;
+  }
+
+  get expressionAttributeValues(): Record<string, string> {
+    return this.attributeValueSession.expressionAttributeValues;
   }
 
   attributeExists(path: string | string[]): ConditionExpression {
@@ -113,6 +121,7 @@ export class ConditionExpressionBuilder {
   }
 
   private condition(condition: Condition): ConditionExpression {
+    console.log(`condition: ${JSON.stringify(condition, null, 2)}`);
     let segments: ReadonlyArray<string>;
     if (typeof condition.path === 'string') {
       segments = [condition.path];
@@ -122,11 +131,10 @@ export class ConditionExpressionBuilder {
 
     const attributeNameIdentifiers: string[] = [];
     segments.forEach((segment) => {
-      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(segment);
-      attributeNameIdentifiers.push(attributeNameIdentifier);
+      attributeNameIdentifiers.push(this.attributeNameSession.provideAttributeNameIdentifier(segment));
     });
     const attributeNameIdentifier = attributeNameIdentifiers.join('.');
-
+    console.log(`attributeNameIdentifier: ${attributeNameIdentifier}`);
     if (condition.type === 'attribute_exists' || condition.type === 'attribute_not_exists') {
       return {
         expression: `${condition.type}(${attributeNameIdentifier})`,
