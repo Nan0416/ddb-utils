@@ -121,7 +121,6 @@ export class ConditionExpressionBuilder {
   }
 
   private condition(condition: Condition): ConditionExpression {
-    console.log(`condition: ${JSON.stringify(condition, null, 2)}`);
     let segments: ReadonlyArray<string>;
     if (typeof condition.path === 'string') {
       segments = [condition.path];
@@ -134,7 +133,6 @@ export class ConditionExpressionBuilder {
       attributeNameIdentifiers.push(this.attributeNameSession.provideAttributeNameIdentifier(segment));
     });
     const attributeNameIdentifier = attributeNameIdentifiers.join('.');
-    console.log(`attributeNameIdentifier: ${attributeNameIdentifier}`);
     if (condition.type === 'attribute_exists' || condition.type === 'attribute_not_exists') {
       return {
         expression: `${condition.type}(${attributeNameIdentifier})`,
