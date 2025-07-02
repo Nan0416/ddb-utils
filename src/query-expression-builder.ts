@@ -31,6 +31,43 @@ type Condition = TwoOperandsCondition | BetweenCondition;
 
 /**
  * Reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html
+ *
+ * Throughtput https://aws.amazon.com/blogs/database/part-1-scaling-dynamodb-how-partitions-hot-keys-and-split-for-heat-impact-performance/
+ * A DynamoDB table data is stored into several physical partition based on the partition key (and sometime sort key). Each partition
+ * support 3000 strong consistent read units per second and 1000 write unit per second. The 3000 and 1000 are hard limit. To increase throughput, DynamoDB can
+ * divide one partition into two partitions based on the sort key. However, if the application has a hot partition key, the application developer has to
+ * re-design the hot partition key.
+ *
+ * By default, a DynamoDB table come with 3 partitions. And each partition has a primary node and two replica in different AZs. The primary node is used to support
+ * all write operation and strong consistence read. For eventual consistence read, it can read from the replica. And each partition node can handle 3000 RCU and
+ * 1000 WCU. It means each partition can support 3000 SC RCU or 9000 eventual consistence (EC) RCU, and 1000 WCU. However, considering any of the node be turn down
+ * due to deployment, the guaranteed EC RCU is 6000.
+ *
+ * What does capacity unit mean? https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/read-write-operations.html
+ *
+ * 1. One read capacity unit means 4KB of data. One partition node supports 3000 RCU, it means the maximum I/O throughput is 12MB/second for read access.
+ * 2. One write capacity unit means 1KB of data. One partition node supports 1000 WCU, it means the maximum I/O throughput is 1MB/second for write access.
+ * 2. How does DynamoDB calculates the by consumed capacity? It depends on the operation and item size.
+ *  * For strong consistence read, it equals ceil(item size/4KB). Example, reading an item whose size is around 900 bytes, then the RCU ceil (0.9/4KB) = 1.
+ *  * BatchGetItem is same as read item individually, for each item, it round up to 4KB, and then sum.
+ *  * Query is different from BatchGetItem, it sums up the total item size, and then divided by 4KB.
+ *
+ * Example 1, I have a DDB table and each item size is near the maximum limit 400KB. I want to use Query to get items on the same partition, how many
+ * items will I get in one Query request? And how many concurrent Query can you have one the same partiton key?
+ *
+ * One query operation support up to 1MB of data, it means 1MB/400KB = 2.
+ *
+ * The maximum number of concurrent query also depends on if the request is strong consistence or eventual consistence. For eventual consistence, in most case, you have
+ * one primary node and two replica can execute the query, and one node can support 3000 * 4KB = 12MB, you can a maximum read throughput of 36MB, meaning, a 36 concurrent
+ * query on the same partition.
+ *
+ * Example 2, I have a DDB table and each item size is near the maximum limit 400KB. I want to use BatchWrite to delete items on the same partition, how many
+ * items can I delete in one BatchWrite request?
+ *
+ * First, the maximum item in one BatchWrite operation is 25. Second, all items are in the same partition, the maximum write throughput is 1000 * 1KB = 1MB,
+ * divided by 400 KB per item, the maximum items in one request is 2.
+ *
+ *  Min(25, 1000 WCU * 1(KB/WCU) / 400(KB/Item)) = 2.
  */
 export class QueryExpressionBuilder {
   private readonly attributeNameSession: AttributeNameSession;

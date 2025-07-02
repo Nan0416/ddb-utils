@@ -3,3 +3,5 @@ export * from './condition-expression-builder';
 export * from './projection-expression-builder';
 export * from './query-expression-builder';
 export * from './errors';
+export * from './item-parser';
+export * from './batch-delete';
