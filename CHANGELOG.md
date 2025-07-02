@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/Nan0416/ddb-utils/compare/v1.7.0...v1.8.0) (2025-07-02)
+
+
+### Features
+
+* **batch-delete:** support query to delete and item parser ([#11](https://github.com/Nan0416/ddb-utils/issues/11)) ([1c84f07](https://github.com/Nan0416/ddb-utils/commit/1c84f07ee0c616bfe6a81dba52305bac4ca085e5))
+
 # [1.7.0](https://github.com/Nan0416/ddb-utils/compare/v1.6.0...v1.7.0) (2025-06-02)
 
 
