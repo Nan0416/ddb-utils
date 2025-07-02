@@ -47,8 +47,8 @@ export async function demo(docClient: DynamoDBDocument, tableName: string) {
 
   const queryExpressionBuilder = new QueryExpressionBuilder().key(Columns.PARTITION_KEY_COL, 'ddb-utils').equal(Columns.LOCAL_SORT_KEY_COL, '3');
 
-  const fitlering = queryExpressionBuilder.filterExpressionBuilder;
-  const filter = fitlering.equal(Columns.SORT_KEY_COL, 'v_0093');
+  const filtering = queryExpressionBuilder.filterExpressionBuilder;
+  const filter = filtering.equal(Columns.SORT_KEY_COL, 'v_0093');
 
   const queryExpression = queryExpressionBuilder.build();
   const queryInput: QueryCommandInput = {
