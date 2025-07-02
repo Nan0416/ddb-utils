@@ -23,10 +23,6 @@ export async function batchDelete(
     /**
      * Query operates on the same partition, each query returns maximum 1MB data.
      * batchWrite will then operate the same partition as well, and the write operation also has a maximum 1MB per partition.
-     *
-     * Minor Risk: when the items are at the right size, the batchWrite consumed capacity could exceed the 1000 WCU.
-     *
-     * e.g. item size is 381
      */
     const queryOutput: QueryCommandOutput = await docClient.query({
       TableName: tableName,
