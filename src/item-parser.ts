@@ -30,7 +30,7 @@ export class ItemParser {
     return value;
   }
 
-  static extractOptionalStringLiteral<T extends string>(key: string, item: Record<string, NativeAttributeValue>, assertion: (x: any) => asserts x is T): T | undefined {
+  static extractOptionalStringLiteral<T extends string>(key: string, item: Record<string, NativeAttributeValue>, validValues: ReadonlyArray<T>): T | undefined {
     const value = item[key];
     if (value === undefined) {
       return undefined;
@@ -38,8 +38,10 @@ export class ItemParser {
     if (typeof value !== 'string') {
       throw new Error(`Unexpected ${typeof value} data type for ${key}`);
     }
-    assertion(value);
-    return value;
+    if (!validValues.includes(value as any)) {
+      throw new Error(`Unexpected ${value} for ${key}`);
+    }
+    return value as any;
   }
 
   static extractNumber(key: string, item: Record<string, NativeAttributeValue>): number {
@@ -72,6 +74,22 @@ export class ItemParser {
 
   static extractISODateString(key: string, item: Record<string, NativeAttributeValue>): string {
     const value = item[key];
+    if (typeof value !== 'string') {
+      throw new Error(`Unexpected ${typeof value} data type for ${key}`);
+    }
+
+    if (isNaN(new Date(value).getTime())) {
+      throw new Error(`${value} is not a valid ISO Date String.`);
+    }
+    return value;
+  }
+
+  static extractOptionalISODateString(key: string, item: Record<string, NativeAttributeValue>): string | undefined {
+    const value = item[key];
+    if (value === undefined) {
+      return undefined;
+    }
+
     if (typeof value !== 'string') {
       throw new Error(`Unexpected ${typeof value} data type for ${key}`);
     }
