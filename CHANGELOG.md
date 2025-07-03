@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/Nan0416/ddb-utils/compare/v1.8.0...v1.9.0) (2025-07-03)
+
+
+### Features
+
+* **item-parser:** add extractOptionalISODateString and use string literal array for optional string literal assertion ([#12](https://github.com/Nan0416/ddb-utils/issues/12)) ([1f14dd6](https://github.com/Nan0416/ddb-utils/commit/1f14dd6f20957a901c4bd81096b83d6faa791bda))
+
 # [1.8.0](https://github.com/Nan0416/ddb-utils/compare/v1.7.0...v1.8.0) (2025-07-02)
 
 
