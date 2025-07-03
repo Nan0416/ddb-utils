@@ -97,41 +97,37 @@ describe('item-parser', () => {
   });
 
   describe('extractOptionalStringLiteral', () => {
-    const assertion = (x: any): asserts x is 'active' | 'inactive' => {
-      if (x !== 'active' && x !== 'inactive') {
-        throw new Error('Invalid status');
-      }
-    };
+    const validValues = ['active', 'inactive', 'pending'] as const;
 
     test('should extract valid string literal', () => {
       const item = { status: 'active', name: 'John' };
-      const result = ItemParser.extractOptionalStringLiteral('status', item, assertion);
+      const result = ItemParser.extractOptionalStringLiteral('status', item, validValues);
       expect(result).toBe('active');
     });
 
     test('should return undefined for missing key', () => {
       const item = { name: 'John' };
-      const result = ItemParser.extractOptionalStringLiteral('status', item, assertion);
+      const result = ItemParser.extractOptionalStringLiteral('status', item, validValues);
       expect(result).toBeUndefined();
     });
 
     test('should return undefined for undefined value', () => {
       const item = { status: undefined, name: 'John' };
-      const result = ItemParser.extractOptionalStringLiteral('status', item, assertion);
+      const result = ItemParser.extractOptionalStringLiteral('status', item, validValues);
       expect(result).toBeUndefined();
     });
 
     test('should throw error for invalid string literal', () => {
       const item = { status: 'invalid', name: 'John' };
       expect(() => {
-        ItemParser.extractOptionalStringLiteral('status', item, assertion);
-      }).toThrow('Invalid status');
+        ItemParser.extractOptionalStringLiteral('status', item, validValues);
+      }).toThrow('Unexpected invalid for status');
     });
 
     test('should throw error for non-string value', () => {
       const item = { status: 123, name: 'John' };
       expect(() => {
-        ItemParser.extractOptionalStringLiteral('status', item, assertion);
+        ItemParser.extractOptionalStringLiteral('status', item, validValues);
       }).toThrow('Unexpected number data type for status');
     });
   });
@@ -278,6 +274,40 @@ describe('item-parser', () => {
       expect(() => {
         ItemParser.extractISODateString('createdAt', item);
       }).toThrow('Unexpected undefined data type for createdAt');
+    });
+  });
+
+  describe('extractOptionalISODateString', () => {
+    test('should extract valid ISO date string', () => {
+      const item = { createdAt: '2024-01-01T00:00:00.000Z', name: 'John' };
+      const result = ItemParser.extractOptionalISODateString('createdAt', item);
+      expect(result).toBe('2024-01-01T00:00:00.000Z');
+    });
+
+    test('should extract valid date string without time', () => {
+      const item = { createdAt: '2024-01-01', name: 'John' };
+      const result = ItemParser.extractOptionalISODateString('createdAt', item);
+      expect(result).toBe('2024-01-01');
+    });
+
+    test('should throw error for invalid date string', () => {
+      const item = { createdAt: 'invalid-date', name: 'John' };
+      expect(() => {
+        ItemParser.extractOptionalISODateString('createdAt', item);
+      }).toThrow('invalid-date is not a valid ISO Date String.');
+    });
+
+    test('should throw error for non-string value', () => {
+      const item = { createdAt: 123, name: 'John' };
+      expect(() => {
+        ItemParser.extractOptionalISODateString('createdAt', item);
+      }).toThrow('Unexpected number data type for createdAt');
+    });
+
+    test('should return undefined for undefined value', () => {
+      const item = { name: 'John' };
+      const result = ItemParser.extractOptionalISODateString('createdAt', item);
+      expect(result).toBeUndefined();
     });
   });
 
