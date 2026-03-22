@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/Nan0416/ddb-utils/compare/v1.9.0...v1.10.0) (2026-03-22)
+
+
+### Features
+
+* **update-expression:** add addToSet/deleteFromSet + project improvements ([#13](https://github.com/Nan0416/ddb-utils/issues/13)) ([6891827](https://github.com/Nan0416/ddb-utils/commit/68918278290d8a24a09887758140545502251fff))
+
 # [1.9.0](https://github.com/Nan0416/ddb-utils/compare/v1.8.0...v1.9.0) (2025-07-03)
 
 
