@@ -10,7 +10,7 @@ export interface UpdateExpression {
 }
 
 interface _Operation {
-  readonly type: 'delete' | 'set' | 'list_append';
+  readonly type: 'delete' | 'set' | 'list_append' | 'add_to_set' | 'delete_from_set';
 }
 
 interface DeleteOperation extends _Operation {
@@ -33,11 +33,25 @@ interface ListAppendOperation extends _Operation {
   readonly allowListInit: boolean;
 }
 
-type Operation = DeleteOperation | SetOperation | ListAppendOperation;
+/** DynamoDB ADD action — adds elements to a String Set, Number Set, or Binary Set. Also works for incrementing a number. */
+interface AddToSetOperation extends _Operation {
+  readonly type: 'add_to_set';
+  readonly value: NativeAttributeValue;
+}
+
+/** DynamoDB DELETE action — removes elements from a String Set, Number Set, or Binary Set. */
+interface DeleteFromSetOperation extends _Operation {
+  readonly type: 'delete_from_set';
+  readonly value: NativeAttributeValue;
+}
+
+type Operation = DeleteOperation | SetOperation | ListAppendOperation | AddToSetOperation | DeleteFromSetOperation;
 
 export class UpdateExpressionBuilder {
   private readonly setStatements: string[];
   private readonly removeStatements: string[];
+  private readonly addStatements: string[];
+  private readonly deleteFromSetStatements: string[];
   private readonly attributeNameSession: AttributeNameSession;
   private readonly attributeValueSession: AttributeValueSession;
   readonly conditionExpressionBuilder: ConditionExpressionBuilder;
@@ -46,6 +60,8 @@ export class UpdateExpressionBuilder {
   constructor() {
     this.setStatements = [];
     this.removeStatements = [];
+    this.addStatements = [];
+    this.deleteFromSetStatements = [];
     this.attributeNameSession = new AttributeNameSession();
     this.attributeValueSession = new AttributeValueSession();
     this.visitedPaths = new Set();
@@ -75,6 +91,24 @@ export class UpdateExpressionBuilder {
 
   delete(path: string | ReadonlyArray<string>): UpdateExpressionBuilder {
     return this.with(path, { type: 'delete' });
+  }
+
+  /**
+   * DynamoDB ADD action — adds elements to a Set (String Set, Number Set, or Binary Set),
+   * or increments a number attribute. Uses the DynamoDB `ADD` update action.
+   * Reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.UpdateExpressions.html#Expressions.UpdateExpressions.ADD
+   */
+  addToSet(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
+    return this.with(path, { type: 'add_to_set', value: value });
+  }
+
+  /**
+   * DynamoDB DELETE action — removes elements from a Set (String Set, Number Set, or Binary Set).
+   * Uses the DynamoDB `DELETE` update action.
+   * Reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.UpdateExpressions.html#Expressions.UpdateExpressions.DELETE
+   */
+  deleteFromSet(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
+    return this.with(path, { type: 'delete_from_set', value: value });
   }
 
   /**
@@ -125,12 +159,18 @@ export class UpdateExpressionBuilder {
       } else {
         this.setStatements.push(`${attributePath} = list_append(${attributePathOperand}, ${valueIdentifier})`);
       }
+    } else if (op.type === 'add_to_set') {
+      const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.value);
+      this.addStatements.push(`${attributeNameIdentifiers.join('.')} ${valueIdentifier}`);
+    } else if (op.type === 'delete_from_set') {
+      const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.value);
+      this.deleteFromSetStatements.push(`${attributeNameIdentifiers.join('.')} ${valueIdentifier}`);
     }
     return this;
   }
 
   hasUpdate() {
-    return this.removeStatements.length > 0 || this.setStatements.length > 0;
+    return this.removeStatements.length > 0 || this.setStatements.length > 0 || this.addStatements.length > 0 || this.deleteFromSetStatements.length > 0;
   }
 
   build(): UpdateExpression {
@@ -144,6 +184,12 @@ export class UpdateExpressionBuilder {
     }
     if (this.removeStatements.length > 0) {
       statements.push(`REMOVE ${this.removeStatements.join(', ')}`);
+    }
+    if (this.addStatements.length > 0) {
+      statements.push(`ADD ${this.addStatements.join(', ')}`);
+    }
+    if (this.deleteFromSetStatements.length > 0) {
+      statements.push(`DELETE ${this.deleteFromSetStatements.join(', ')}`);
     }
 
     return {

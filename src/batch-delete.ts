@@ -64,10 +64,10 @@ async function batchDeleteWithProtectedWriteThroughput(docClient: DynamoDBDocume
   // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html
   // Maximum 25 items in a batch request, otherwise, it throws exception.
   const partitionedKeys = lodash.chunk(itemsToDelete, ITEM_TO_DELETE_PER_BATCH);
-  for (let i = 0; i < partitionedKeys.length; i++) {
+  for (const chunk of partitionedKeys) {
     const resp = await docClient.batchWrite({
       RequestItems: {
-        [tableName]: partitionedKeys[i].map((item) => {
+        [tableName]: chunk.map((item) => {
           return {
             DeleteRequest: {
               Key: item,

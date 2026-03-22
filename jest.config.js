@@ -14,8 +14,17 @@ module.exports = {
     "src/**/*.(ts|js)",
   ],
   coveragePathIgnorePatterns: [
-    "index.(ts|js)",
+    "/node_modules/",
+    "src/index\\.ts$",
   ],
+  coverageThreshold: {
+    global: {
+      statements: 95,
+      branches: 90,
+      functions: 100,
+      lines: 95,
+    },
+  },
   reporters: [
     'default',
     ['jest-junit', {
@@ -24,5 +33,5 @@ module.exports = {
       outputName: 'junit.xml'
     }]
   ],
-  testTimeout: 10_000,
+  testTimeout: 5_000,
 }

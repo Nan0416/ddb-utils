@@ -4,13 +4,12 @@ on:
     branches:
       - main
 permissions:
-  id-token: write
   contents: write
   issues: write
   pull-requests: write
 jobs:
   build_and_test:
-    name: Node.js 20 Release
+    name: Node.js 22 Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
@@ -18,7 +17,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: 'https://registry.npmjs.org/'
       - name: Probe
         run: |
