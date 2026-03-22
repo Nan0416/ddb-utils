@@ -3,43 +3,13 @@
  */
 module.exports = {
   branches: ['main'],
-  ci: true,
-  dryRun: false,
   plugins: [
     [
       '@semantic-release/commit-analyzer',
       {
         preset: 'angular',
-        releaseRules: [
-          {
-            type: 'build',
-            release: 'patch',
-          },
-          {
-            type: 'ci',
-            release: 'patch',
-          },
-          {
-            type: 'chore',
-            release: 'patch',
-          },
-          {
-            type: 'docs',
-            release: 'patch',
-          },
-          {
-            type: 'refactor',
-            release: 'patch',
-          },
-          {
-            type: 'style',
-            release: 'patch',
-          },
-          {
-            type: 'test',
-            release: 'patch',
-          },
-        ],
+        // Only feat and fix trigger releases. Other types (docs, chore, refactor, test, etc.)
+        // do not publish a new version — consumers don't benefit from those changes.
         parserOpts: {
           noteKeywords: ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING'],
         },
@@ -64,7 +34,6 @@ module.exports = {
       '@semantic-release/npm',
       {
         npmPublish: true,
-        tarballDir: 'dist',
       },
     ],
     [
@@ -74,11 +43,6 @@ module.exports = {
         message: 'release(version): Release ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
       },
     ],
-    [
-      '@semantic-release/github',
-      {
-        assets: 'dist/*.tgz',
-      },
-    ],
+    '@semantic-release/github',
   ],
 };
