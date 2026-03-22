@@ -117,7 +117,10 @@ describe('UpdateExpressionBuilder', () => {
     });
 
     test('multiple add operations', () => {
-      const expression = builder.addToSet('tags', new Set(['tag1'])).addToSet('scores', new Set([100])).build();
+      const expression = builder
+        .addToSet('tags', new Set(['tag1']))
+        .addToSet('scores', new Set([100]))
+        .build();
       expect(expression.updateExpression).toBe('ADD #a0 :v0, #a1 :v1');
     });
 
@@ -138,7 +141,10 @@ describe('UpdateExpressionBuilder', () => {
     });
 
     test('multiple delete operations', () => {
-      const expression = builder.deleteFromSet('tags', new Set(['tag1'])).deleteFromSet('scores', new Set([100])).build();
+      const expression = builder
+        .deleteFromSet('tags', new Set(['tag1']))
+        .deleteFromSet('scores', new Set([100]))
+        .build();
       expect(expression.updateExpression).toBe('DELETE #a0 :v0, #a1 :v1');
     });
 

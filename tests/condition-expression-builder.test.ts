@@ -86,13 +86,7 @@ describe('ConditionExpressionBuilder', () => {
     });
 
     test('complex nested logic', () => {
-      const result = cond.or(
-        cond.equal('accountId', '1234'),
-        cond.and(
-          cond.greaterThan('order.total', 1000),
-          cond.greaterThan(['order', 'total'], 1000),
-        ),
-      );
+      const result = cond.or(cond.equal('accountId', '1234'), cond.and(cond.greaterThan('order.total', 1000), cond.greaterThan(['order', 'total'], 1000)));
       expect(result.expression).toBe('(#a0 = :v0) OR ((#a1 > :v1) AND (#a2.#a3 > :v2))');
       // 'order.total' as a single string is a different attribute name than ['order', 'total']
       expect(cond.expressionAttributeNames['#a1']).toBe('order.total');
@@ -101,11 +95,7 @@ describe('ConditionExpressionBuilder', () => {
     });
 
     test('and with three conditions', () => {
-      const result = cond.and(
-        cond.attributeExists('a'),
-        cond.equal('b', 1),
-        cond.greaterThan('c', 0),
-      );
+      const result = cond.and(cond.attributeExists('a'), cond.equal('b', 1), cond.greaterThan('c', 0));
       expect(result.expression).toBe('(attribute_exists(#a0)) AND (#a1 = :v0) AND (#a2 > :v1)');
     });
   });
