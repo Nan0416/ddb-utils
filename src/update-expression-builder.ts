@@ -10,7 +10,7 @@ export interface UpdateExpression {
 }
 
 interface _Operation {
-  readonly type: 'delete' | 'set' | 'list_append' | 'add_to_set' | 'delete_from_set';
+  readonly type: 'delete' | 'set' | 'set_if_not_exists' | 'increment' | 'list_append' | 'add_to_set' | 'delete_from_set';
 }
 
 interface DeleteOperation extends _Operation {
@@ -20,6 +20,19 @@ interface DeleteOperation extends _Operation {
 interface SetOperation extends _Operation {
   readonly type: 'set';
   readonly value: NativeAttributeValue;
+}
+
+/** SET path = if_not_exists(path, value): writes the value only when the attribute is absent. */
+interface SetIfNotExistsOperation extends _Operation {
+  readonly type: 'set_if_not_exists';
+  readonly value: NativeAttributeValue;
+}
+
+/** SET path = path + delta, or if_not_exists(path, initialValue) + delta when an initial value is given. */
+interface IncrementOperation extends _Operation {
+  readonly type: 'increment';
+  readonly delta: number;
+  readonly initialValue?: number;
 }
 
 interface ListAppendOperation extends _Operation {
@@ -45,7 +58,12 @@ interface DeleteFromSetOperation extends _Operation {
   readonly value: NativeAttributeValue;
 }
 
-type Operation = DeleteOperation | SetOperation | ListAppendOperation | AddToSetOperation | DeleteFromSetOperation;
+type Operation = DeleteOperation | SetOperation | SetIfNotExistsOperation | IncrementOperation | ListAppendOperation | AddToSetOperation | DeleteFromSetOperation;
+
+export interface SetFieldsOptions {
+  /** REMOVE an attribute whose value is null instead of storing NULL. @default false */
+  readonly removeNulls?: boolean;
+}
 
 export class UpdateExpressionBuilder {
   private readonly setStatements: string[];
@@ -70,6 +88,38 @@ export class UpdateExpressionBuilder {
 
   set(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
     return this.with(path, { type: 'set', value: value });
+  }
+
+  /**
+   * One `set` per top-level field. An undefined value is skipped, so a partial-update object
+   * can be passed as it is; a null value is stored as NULL, or removed with `removeNulls`.
+   */
+  setFields(fields: Readonly<Record<string, NativeAttributeValue>>, options?: SetFieldsOptions): UpdateExpressionBuilder {
+    for (const [field, value] of Object.entries(fields)) {
+      if (value === undefined) {
+        continue;
+      }
+      if (value === null && options?.removeNulls === true) {
+        this.delete(field);
+      } else {
+        this.set(field, value);
+      }
+    }
+    return this;
+  }
+
+  /** Writes the value only when the attribute is absent; an existing value is kept. */
+  setIfNotExists(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
+    return this.with(path, { type: 'set_if_not_exists', value: value });
+  }
+
+  /**
+   * Adds `delta` (negative to subtract) to a number attribute. Without `initialValue` the
+   * attribute must exist, or DynamoDB rejects the update; with it, a missing attribute counts
+   * from `initialValue`.
+   */
+  increment(path: string | ReadonlyArray<string>, delta: number, initialValue?: number): UpdateExpressionBuilder {
+    return this.with(path, { type: 'increment', delta: delta, initialValue: initialValue });
   }
 
   /**
@@ -113,9 +163,6 @@ export class UpdateExpressionBuilder {
 
   /**
    * Reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html#Expressions.ExpressionAttributeNames.NestedAttributes
-   * @param col
-   * @param value null to delete, undefined to noop,
-   * @returns
    */
   private with(path: string | ReadonlyArray<string>, op: Operation): UpdateExpressionBuilder {
     if (typeof path === 'string') {
@@ -143,6 +190,19 @@ export class UpdateExpressionBuilder {
       // if this is a nested path, ensure the top level exist before setting the value. Otherwise, it will throw
       // ValidationException: The document path provided in the update expression is invalid for update.
       this.setStatements.push(`${attributeNameIdentifiers.join('.')} = ${valueIdentifier}`);
+    } else if (op.type === 'set_if_not_exists') {
+      const attributePath = attributeNameIdentifiers.join('.');
+      const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.value);
+      this.setStatements.push(`${attributePath} = if_not_exists(${attributePath}, ${valueIdentifier})`);
+    } else if (op.type === 'increment') {
+      const attributePath = attributeNameIdentifiers.join('.');
+      let operand = attributePath;
+      if (op.initialValue !== undefined) {
+        const initialValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.initialValue);
+        operand = `if_not_exists(${attributePath}, ${initialValueIdentifier})`;
+      }
+      const deltaIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.delta);
+      this.setStatements.push(`${attributePath} = ${operand} + ${deltaIdentifier}`);
     } else if (op.type === 'list_append') {
       const value = Array.isArray(op.value) ? op.value : [op.value];
       const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(value);

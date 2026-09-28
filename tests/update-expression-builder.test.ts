@@ -287,4 +287,59 @@ describe('UpdateExpressionBuilder', () => {
       expect(() => builder.set(['a', 'b'], 2)).toThrow(InvalidDynamoDbUpdateRequestError);
     });
   });
+
+  describe('setIfNotExists', () => {
+    test('writes only when absent', () => {
+      expect(builder.setIfNotExists('createdAt', '2025-01-01').build()).toEqual({
+        updateExpression: 'SET #a0 = if_not_exists(#a0, :v0)',
+        expressionAttributeValues: { ':v0': '2025-01-01' },
+        expressionAttributeNames: { '#a0': 'createdAt' },
+      });
+    });
+  });
+
+  describe('increment', () => {
+    test('adds to an existing attribute', () => {
+      expect(builder.increment('count', 2).build()).toEqual({
+        updateExpression: 'SET #a0 = #a0 + :v0',
+        expressionAttributeValues: { ':v0': 2 },
+        expressionAttributeNames: { '#a0': 'count' },
+      });
+    });
+
+    test('counts from the initial value when the attribute is absent', () => {
+      expect(builder.increment(['job', 'attempt'], 1, 0).build()).toEqual({
+        updateExpression: 'SET #a0.#a1 = if_not_exists(#a0.#a1, :v0) + :v1',
+        expressionAttributeValues: { ':v0': 0, ':v1': 1 },
+        expressionAttributeNames: { '#a0': 'job', '#a1': 'attempt' },
+      });
+    });
+
+    test('a negative delta subtracts', () => {
+      expect(builder.increment('stock', -3).build().expressionAttributeValues).toEqual({ ':v0': -3 });
+    });
+  });
+
+  describe('setFields', () => {
+    test('skips undefined and stores null by default', () => {
+      expect(builder.setFields({ a: 1, b: undefined, c: null }).build()).toEqual({
+        updateExpression: 'SET #a0 = :v0, #a1 = :v1',
+        expressionAttributeValues: { ':v0': 1, ':v1': null },
+        expressionAttributeNames: { '#a0': 'a', '#a1': 'c' },
+      });
+    });
+
+    test('removes null values with removeNulls', () => {
+      expect(builder.setFields({ a: 1, b: undefined, c: null }, { removeNulls: true }).build()).toEqual({
+        updateExpression: 'SET #a0 = :v0 REMOVE #a1',
+        expressionAttributeValues: { ':v0': 1 },
+        expressionAttributeNames: { '#a0': 'a', '#a1': 'c' },
+      });
+    });
+
+    test('an all-undefined object leaves nothing to update', () => {
+      builder.setFields({ a: undefined });
+      expect(builder.hasUpdate()).toBe(false);
+    });
+  });
 });
