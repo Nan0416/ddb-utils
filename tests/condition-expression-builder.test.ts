@@ -1,4 +1,4 @@
-import { ConditionExpressionBuilder } from '../src';
+import { ConditionExpressionBuilder, InvalidDynamoDbConditionRequestError } from '../src';
 
 describe('ConditionExpressionBuilder', () => {
   let cond: ConditionExpressionBuilder;
@@ -121,6 +121,46 @@ describe('ConditionExpressionBuilder', () => {
       expect(() => cond.attributeExists('b')).not.toThrow();
       // equal uses name session first (succeeds since not finalized), then value session (throws)
       expect(() => cond.equal('c', 2)).toThrow();
+    });
+  });
+
+  describe('notEqual, between, beginsWith, contains, in', () => {
+    test('notEqual', () => {
+      expect(cond.notEqual('status', 'deleted').expression).toBe('#a0 <> :v0');
+      expect(cond.expressionAttributeValues).toEqual({ ':v0': 'deleted' });
+    });
+
+    test('between on a nested path', () => {
+      expect(cond.between(['order', 'total'], 10, 20).expression).toBe('#a0.#a1 BETWEEN :v0 AND :v1');
+      expect(cond.expressionAttributeValues).toEqual({ ':v0': 10, ':v1': 20 });
+    });
+
+    test('beginsWith', () => {
+      expect(cond.beginsWith('sku', 'LPN-').expression).toBe('begins_with(#a0, :v0)');
+    });
+
+    test('contains', () => {
+      expect(cond.contains('tags', 'demo').expression).toBe('contains(#a0, :v0)');
+    });
+
+    test('in lists every value', () => {
+      expect(cond.in('status', ['open', 'held']).expression).toBe('#a0 IN (:v0, :v1)');
+      expect(cond.expressionAttributeValues).toEqual({ ':v0': 'open', ':v1': 'held' });
+    });
+
+    test('in refuses an empty list and more than 100 values', () => {
+      expect(() => cond.in('status', [])).toThrow(InvalidDynamoDbConditionRequestError);
+      expect(() =>
+        cond.in(
+          'status',
+          Array.from({ length: 101 }, (_, i) => i),
+        ),
+      ).toThrow('IN takes 1 to 100 values, got 101.');
+    });
+
+    test('compares against null and list values', () => {
+      cond.and(cond.equal('clearedAt', null), cond.notEqual('path', ['a', 'b']));
+      expect(cond.expressionAttributeValues).toEqual({ ':v0': null, ':v1': ['a', 'b'] });
     });
   });
 });

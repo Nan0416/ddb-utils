@@ -54,6 +54,26 @@ The update expression sent to DynamoDB is equivalent to
 }
 ```
 
+## Update actions
+
+| Method | Emits |
+|---|---|
+| `set(path, value)` | `SET p = :v` |
+| `setFields({ a, b, c }, { removeNulls })` | one `set` per field; `undefined` skipped, `null` stored or (with `removeNulls`) removed |
+| `setIfNotExists(path, value)` | `SET p = if_not_exists(p, :v)` |
+| `increment(path, delta, initialValue?)` | `SET p = p + :d`, or `SET p = if_not_exists(p, :init) + :d` |
+| `append(path, value, position?, failIfMissing?)` | `SET p = list_append(...)` |
+| `delete(path)` | `REMOVE p` |
+| `addToSet(path, value)` / `deleteFromSet(path, value)` | `ADD p :v` / `DELETE p :v` |
+
+## Conditions
+
+`ConditionExpressionBuilder` (and `UpdateExpressionBuilder.conditionExpressionBuilder`, `QueryExpressionBuilder.filterExpressionBuilder`) provides `equal`, `notEqual`, `lessThan`, `lessThanOrEqualTo`, `greaterThan`, `greaterThanOrEqualTo`, `between`, `beginsWith`, `contains`, `in` (1 to 100 values), `attributeExists`, `attributeNotExists`, combined with `and`, `or` and `not`. Values may be any DynamoDB value, `null` and lists included.
+
+## Reading items
+
+`ItemParser` reads typed attributes and throws `ItemParseError` (with the attribute's `key`) for a missing required attribute or a wrong type. `extractX` requires the attribute, `extractOptionalX` returns `undefined` when it is absent, and `extractNullableX` also returns `null` for a stored NULL.
+
 ## How to run examples
 
 1. Define two environment variables. The project uses [dotenv](https://www.npmjs.com/package/dotenv) to load environment variables from a `.env` file.
