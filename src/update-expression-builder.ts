@@ -1,5 +1,5 @@
 import type { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
-import { AttributePath, pathKey, renderPath } from './attribute-path';
+import { AttributePath, describePath, pathKey, renderPath } from './attribute-path';
 import { AttributeNameSession, AttributeValueSession } from './attribute-session';
 import { ConditionExpressionBuilder } from './condition-expression-builder';
 import { InvalidDynamoDbUpdateRequestError } from './errors';
@@ -168,7 +168,7 @@ export class UpdateExpressionBuilder {
   private with(path: AttributePath, op: Operation): UpdateExpressionBuilder {
     const key = pathKey(path);
     if (this.visitedPaths.has(key)) {
-      throw new InvalidDynamoDbUpdateRequestError(`Path ${key} is already in the update list.`);
+      throw new InvalidDynamoDbUpdateRequestError(`Path ${describePath(path)} is already in the update list.`);
     }
     this.visitedPaths.add(key);
     const attributePath = renderPath(path, this.attributeNameSession);

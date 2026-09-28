@@ -32,8 +32,17 @@ export function renderPath(path: AttributePath, attributeNameSession: AttributeN
     .join('');
 }
 
-/** A key that is equal for two paths naming the same document location. */
+/**
+ * A key that is equal only for two paths naming the same document location. The segments
+ * are serialized as JSON because an attribute name may itself contain `.` or `[`: 'a.b' and
+ * ['a', 'b'], or 'a[0]' and ['a', 0], are different locations.
+ */
 export function pathKey(path: AttributePath): string {
+  return JSON.stringify(segmentsOf(path));
+}
+
+/** The path as a reader would write it, for error messages: ['notes', 3, 'noteId'] is notes[3].noteId. */
+export function describePath(path: AttributePath): string {
   return segmentsOf(path)
     .map((segment, i) => (typeof segment === 'number' ? `[${segment}]` : `${i === 0 ? '' : '.'}${segment}`))
     .join('');

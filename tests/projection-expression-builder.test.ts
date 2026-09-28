@@ -56,6 +56,10 @@ describe('ProjectionExpressionBuilder', () => {
     expect(() => builder.build()).toThrow(InvalidDynamoDbProjectionRequestError);
   });
 
+  test('keeps an attribute named with brackets and the list element it looks like', () => {
+    expect(new ProjectionExpressionBuilder().get('a[0]').get(['a', 0]).build().projectionExpression).toBe('#a0, #a1[0]');
+  });
+
   test('projects a list element and ignores a repeat of it', () => {
     const builder = new ProjectionExpressionBuilder();
     expect(builder.get(['notes', 0, 'text']).get(['notes', 0, 'text']).build()).toEqual({

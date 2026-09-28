@@ -1,5 +1,5 @@
 import { InvalidDynamoDbPathError } from '../src';
-import { pathKey, renderPath } from '../src/attribute-path';
+import { describePath, pathKey, renderPath } from '../src/attribute-path';
 import { AttributeNameSession } from '../src/attribute-session';
 
 describe('attribute paths', () => {
@@ -19,9 +19,16 @@ describe('attribute paths', () => {
     expect(names.expressionAttributeNames).toEqual({ '#a0': 'notes', '#a1': 'noteId', '#a2': 'matrix' });
   });
 
-  test('pathKey names the location, not the placeholders', () => {
-    expect(pathKey(['notes', 3, 'noteId'])).toBe('notes[3].noteId');
-    expect(pathKey('status')).toBe('status');
+  test('pathKey is equal for the same location and different for names containing . or [', () => {
+    expect(pathKey('status')).toBe(pathKey(['status']));
+    expect(pathKey(['notes', 3, 'noteId'])).toBe(pathKey(['notes', 3, 'noteId']));
+    expect(pathKey('a[0]')).not.toBe(pathKey(['a', 0]));
+    expect(pathKey('a.b')).not.toBe(pathKey(['a', 'b']));
+  });
+
+  test('describePath writes the location for a reader', () => {
+    expect(describePath(['notes', 3, 'noteId'])).toBe('notes[3].noteId');
+    expect(describePath('status')).toBe('status');
   });
 
   test('refuses an empty path, a leading index and an index that is not a non-negative integer', () => {
@@ -29,5 +36,6 @@ describe('attribute paths', () => {
     expect(() => renderPath([0, 'a'], names)).toThrow('A path starts with an attribute name, not a list index.');
     expect(() => renderPath(['a', -1], names)).toThrow('A list index is a non-negative integer, got -1.');
     expect(() => pathKey(['a', 1.5])).toThrow(InvalidDynamoDbPathError);
+    expect(() => describePath([])).toThrow(InvalidDynamoDbPathError);
   });
 });

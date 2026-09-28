@@ -361,6 +361,10 @@ describe('UpdateExpressionBuilder', () => {
       expect(expression.expressionAttributeNames).toEqual({ '#a0': 'internal_notes', '#a1': 'note_id' });
     });
 
+    test('an attribute named with brackets or dots is a different location from the path it looks like', () => {
+      expect(builder.set('a[0]', 1).set(['a', 0], 2).set('b.c', 3).set(['b', 'c'], 4).build().updateExpression).toBe('SET #a0 = :v0, #a1[0] = :v1, #a2 = :v2, #a3.#a4 = :v3');
+    });
+
     test('two writes to the same element are refused', () => {
       builder.set(['items', 1], 'a');
       expect(() => builder.set(['items', 1], 'b')).toThrow('Path items[1] is already in the update list.');
