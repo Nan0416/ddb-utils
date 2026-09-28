@@ -1,4 +1,5 @@
 import { ItemParser } from '../src/item-parser';
+import { ItemParseError } from '../src/errors';
 import { NativeAttributeValue } from '@aws-sdk/lib-dynamodb';
 
 describe('item-parser', () => {
@@ -437,14 +438,14 @@ describe('item-parser', () => {
       const item = { user: null, status: 'active' };
       expect(() => {
         ItemParser.extractObject('user', item, buildUser);
-      }).toThrow('Expected object');
+      }).toThrow('Unexpected null data type for user');
     });
 
     test('should throw error for array value', () => {
       const item = { user: ['not', 'an', 'object'], status: 'active' };
       expect(() => {
         ItemParser.extractObject('user', item, buildUser);
-      }).toThrow('Expected object');
+      }).toThrow('Unexpected array data type for user');
     });
 
     test('should throw error for undefined value', () => {
@@ -514,14 +515,14 @@ describe('item-parser', () => {
       const item = { user: null, status: 'active' };
       expect(() => {
         ItemParser.extractOptionalObject('user', item, buildUser);
-      }).toThrow('Expected object');
+      }).toThrow('Unexpected null data type for user');
     });
 
     test('should throw error for array value', () => {
       const item = { user: ['not', 'an', 'object'], status: 'active' };
       expect(() => {
         ItemParser.extractOptionalObject('user', item, buildUser);
-      }).toThrow('Expected object');
+      }).toThrow('Unexpected array data type for user');
     });
 
     test('should throw error when build function fails', () => {
@@ -532,6 +533,68 @@ describe('item-parser', () => {
       expect(() => {
         ItemParser.extractOptionalObject('user', item, buildUser);
       }).toThrow('Unexpected number data type for id');
+    });
+  });
+
+  describe('ItemParseError', () => {
+    test('names the attribute', () => {
+      let caught: unknown;
+      try {
+        ItemParser.extractString('name', { name: 1 });
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught).toBeInstanceOf(ItemParseError);
+      expect(caught).toMatchObject({ name: 'ItemParseError', key: 'name', message: 'Unexpected number data type for name' });
+    });
+  });
+
+  describe('extractOptionalBoolean', () => {
+    test('absent, present and wrong type', () => {
+      expect(ItemParser.extractOptionalBoolean('active', {})).toBeUndefined();
+      expect(ItemParser.extractOptionalBoolean('active', { active: false })).toBe(false);
+      expect(() => ItemParser.extractOptionalBoolean('active', { active: 'yes' })).toThrow('Unexpected string data type for active');
+    });
+  });
+
+  describe('extractNullable*', () => {
+    const item: Record<string, NativeAttributeValue> = {
+      text: 'a',
+      status: 'open',
+      count: 2,
+      flag: true,
+      at: '2025-01-01T00:00:00.000Z',
+      list: [1, 2],
+      map: { k: 'v' },
+      cleared: null,
+    };
+    const identity = (x: NativeAttributeValue) => x;
+
+    test('read a present value', () => {
+      expect(ItemParser.extractNullableString('text', item)).toBe('a');
+      expect(ItemParser.extractNullableStringLiteral('status', item, ['open', 'closed'])).toBe('open');
+      expect(ItemParser.extractNullableNumber('count', item)).toBe(2);
+      expect(ItemParser.extractNullableBoolean('flag', item)).toBe(true);
+      expect(ItemParser.extractNullableISODateString('at', item)).toBe('2025-01-01T00:00:00.000Z');
+      expect(ItemParser.extractNullableArray('list', item, identity)).toEqual([1, 2]);
+      expect(ItemParser.extractNullableObject('map', item, identity)).toEqual({ k: 'v' });
+    });
+
+    test('read a stored NULL as null and an absent attribute as undefined', () => {
+      expect(ItemParser.extractNullableString('cleared', item)).toBeNull();
+      expect(ItemParser.extractNullableStringLiteral('cleared', item, ['open'])).toBeNull();
+      expect(ItemParser.extractNullableNumber('cleared', item)).toBeNull();
+      expect(ItemParser.extractNullableBoolean('cleared', item)).toBeNull();
+      expect(ItemParser.extractNullableISODateString('cleared', item)).toBeNull();
+      expect(ItemParser.extractNullableArray('cleared', item, identity)).toBeNull();
+      expect(ItemParser.extractNullableObject('cleared', item, identity)).toBeNull();
+      expect(ItemParser.extractNullableString('missing', item)).toBeUndefined();
+      expect(ItemParser.extractNullableObject('missing', item, identity)).toBeUndefined();
+    });
+
+    test('still refuse a value of the wrong type', () => {
+      expect(() => ItemParser.extractNullableNumber('text', item)).toThrow(ItemParseError);
+      expect(() => ItemParser.extractNullableStringLiteral('text', item, ['open'])).toThrow('Unexpected a for text');
     });
   });
 });
