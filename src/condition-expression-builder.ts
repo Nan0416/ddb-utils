@@ -1,4 +1,5 @@
 import type { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
+import { AttributePath, renderPath } from './attribute-path';
 import { AttributeNameSession, AttributeValueSession } from './attribute-session';
 import { InvalidDynamoDbConditionRequestError } from './errors';
 
@@ -6,17 +7,25 @@ export interface ConditionExpression {
   readonly expression: string;
 }
 
+/** `size(path)`, compared like an attribute: `cond.equal(cond.size('holds'), 0)`. */
+export interface SizeOperand {
+  readonly sizeOf: AttributePath;
+}
+
+/** The left side of a comparison: an attribute, or the size of one. */
+export type ComparisonOperand = AttributePath | SizeOperand;
+
 /** DynamoDB accepts at most 100 operands on the right of IN. */
 const MAX_IN_OPERANDS = 100;
 
 /**
  * Full of the conditions are listed here. https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html#Expressions.OperatorsAndFunctions.Syntax
  *
- * ToDo: support size, attribute_type
+ * ToDo: support attribute_type
  */
 interface _Condition {
   readonly type: 'attribute_exists' | 'attribute_not_exists' | '=' | '<>' | '<' | '<=' | '>' | '>=' | 'between' | 'begins_with' | 'contains' | 'in';
-  readonly path: string | ReadonlyArray<string>;
+  readonly path: ComparisonOperand;
 }
 
 interface OneOperandCondition extends _Condition {
@@ -58,14 +67,14 @@ export class ConditionExpressionBuilder {
     return this.attributeValueSession.expressionAttributeValues;
   }
 
-  attributeExists(path: string | ReadonlyArray<string>): ConditionExpression {
+  attributeExists(path: AttributePath): ConditionExpression {
     return this.condition({
       type: 'attribute_exists',
       path: path,
     });
   }
 
-  attributeNotExists(path: string | ReadonlyArray<string>): ConditionExpression {
+  attributeNotExists(path: AttributePath): ConditionExpression {
     return this.condition({
       type: 'attribute_not_exists',
       path: path,
@@ -90,7 +99,7 @@ export class ConditionExpressionBuilder {
     };
   }
 
-  lessThan(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  lessThan(path: ComparisonOperand, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: '<',
       path: path,
@@ -98,7 +107,7 @@ export class ConditionExpressionBuilder {
     });
   }
 
-  lessThanOrEqualTo(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  lessThanOrEqualTo(path: ComparisonOperand, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: '<=',
       path: path,
@@ -106,7 +115,7 @@ export class ConditionExpressionBuilder {
     });
   }
 
-  greaterThan(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  greaterThan(path: ComparisonOperand, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: '>',
       path: path,
@@ -114,7 +123,7 @@ export class ConditionExpressionBuilder {
     });
   }
 
-  greaterThanOrEqualTo(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  greaterThanOrEqualTo(path: ComparisonOperand, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: '>=',
       path: path,
@@ -122,7 +131,7 @@ export class ConditionExpressionBuilder {
     });
   }
 
-  equal(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  equal(path: ComparisonOperand, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: '=',
       path: path,
@@ -131,7 +140,7 @@ export class ConditionExpressionBuilder {
   }
 
   /** Also true when the attribute is absent: a missing attribute equals no value. */
-  notEqual(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  notEqual(path: ComparisonOperand, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: '<>',
       path: path,
@@ -143,7 +152,7 @@ export class ConditionExpressionBuilder {
    * @param left inclusive
    * @param right inclusive
    */
-  between(path: string | ReadonlyArray<string>, left: NativeAttributeValue, right: NativeAttributeValue): ConditionExpression {
+  between(path: AttributePath, left: NativeAttributeValue, right: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: 'between',
       path: path,
@@ -152,7 +161,7 @@ export class ConditionExpressionBuilder {
     });
   }
 
-  beginsWith(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  beginsWith(path: AttributePath, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: 'begins_with',
       path: path,
@@ -161,7 +170,7 @@ export class ConditionExpressionBuilder {
   }
 
   /** A substring of a string attribute, or a member of a set or list attribute. */
-  contains(path: string | ReadonlyArray<string>, value: NativeAttributeValue): ConditionExpression {
+  contains(path: AttributePath, value: NativeAttributeValue): ConditionExpression {
     return this.condition({
       type: 'contains',
       path: path,
@@ -169,11 +178,16 @@ export class ConditionExpressionBuilder {
     });
   }
 
+  /** The size of a string, binary, list, map or set attribute, for use as a comparison's left side. */
+  size(path: AttributePath): SizeOperand {
+    return { sizeOf: path };
+  }
+
   /**
    * The attribute equals one of `values`.
    * @throws InvalidDynamoDbConditionRequestError for no values or more than 100, which DynamoDB rejects.
    */
-  in(path: string | ReadonlyArray<string>, values: ReadonlyArray<NativeAttributeValue>): ConditionExpression {
+  in(path: AttributePath, values: ReadonlyArray<NativeAttributeValue>): ConditionExpression {
     if (values.length === 0 || values.length > MAX_IN_OPERANDS) {
       throw new InvalidDynamoDbConditionRequestError(`IN takes 1 to ${MAX_IN_OPERANDS} values, got ${values.length}.`);
     }
@@ -184,19 +198,15 @@ export class ConditionExpressionBuilder {
     });
   }
 
-  private condition(condition: Condition): ConditionExpression {
-    let segments: ReadonlyArray<string>;
-    if (typeof condition.path === 'string') {
-      segments = [condition.path];
-    } else {
-      segments = condition.path;
+  private operand(operand: ComparisonOperand): string {
+    if (typeof operand === 'object' && 'sizeOf' in operand) {
+      return `size(${renderPath(operand.sizeOf, this.attributeNameSession)})`;
     }
+    return renderPath(operand, this.attributeNameSession);
+  }
 
-    const attributeNameIdentifiers: string[] = [];
-    segments.forEach((segment) => {
-      attributeNameIdentifiers.push(this.attributeNameSession.provideAttributeNameIdentifier(segment));
-    });
-    const attributeNameIdentifier = attributeNameIdentifiers.join('.');
+  private condition(condition: Condition): ConditionExpression {
+    const attributeNameIdentifier = this.operand(condition.path);
     if (condition.type === 'attribute_exists' || condition.type === 'attribute_not_exists') {
       return {
         expression: `${condition.type}(${attributeNameIdentifier})`,
