@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/Nan0416/ddb-utils/compare/v1.11.0...v1.12.0) (2026-09-28)
+
+
+### Features
+
+* list-index paths and size() conditions ([#15](https://github.com/Nan0416/ddb-utils/issues/15)) ([f1faf90](https://github.com/Nan0416/ddb-utils/commit/f1faf90fc1ec5b67b33cf0120cf89382874513ec)), closes [.#a1](https://github.com/./issues/a1)
+
 # [1.11.0](https://github.com/Nan0416/ddb-utils/compare/v1.10.0...v1.11.0) (2026-09-28)
 
 
