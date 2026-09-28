@@ -31,6 +31,13 @@ export class QueryConditionConflictError extends Error {
   }
 }
 
+export class InvalidDynamoDbPathError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidDynamoDbPathError';
+  }
+}
+
 export class InvalidDynamoDbConditionRequestError extends Error {
   constructor(message: string) {
     super(message);

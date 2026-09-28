@@ -342,4 +342,28 @@ describe('UpdateExpressionBuilder', () => {
       expect(builder.hasUpdate()).toBe(false);
     });
   });
+
+  describe('list index paths', () => {
+    test('removes one list element and updates a field of another', () => {
+      expect(builder.delete(['internal_notes', 2]).set(['line_outcomes', 0, 'resolved_by'], 'dana').build()).toEqual({
+        updateExpression: 'SET #a1[0].#a2 = :v0 REMOVE #a0[2]',
+        expressionAttributeValues: { ':v0': 'dana' },
+        expressionAttributeNames: { '#a0': 'internal_notes', '#a1': 'line_outcomes', '#a2': 'resolved_by' },
+      });
+    });
+
+    test('a condition on the same element shares the placeholders', () => {
+      const cond = builder.conditionExpressionBuilder;
+      const condition = cond.equal(['internal_notes', 2, 'note_id'], 'n-1');
+      const expression = builder.delete(['internal_notes', 2]).build();
+      expect(condition.expression).toBe('#a0[2].#a1 = :v0');
+      expect(expression.updateExpression).toBe('REMOVE #a0[2]');
+      expect(expression.expressionAttributeNames).toEqual({ '#a0': 'internal_notes', '#a1': 'note_id' });
+    });
+
+    test('two writes to the same element are refused', () => {
+      builder.set(['items', 1], 'a');
+      expect(() => builder.set(['items', 1], 'b')).toThrow('Path items[1] is already in the update list.');
+    });
+  });
 });

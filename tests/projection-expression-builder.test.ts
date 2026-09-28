@@ -55,4 +55,12 @@ describe('ProjectionExpressionBuilder', () => {
   test('throws on empty build', () => {
     expect(() => builder.build()).toThrow(InvalidDynamoDbProjectionRequestError);
   });
+
+  test('projects a list element and ignores a repeat of it', () => {
+    const builder = new ProjectionExpressionBuilder();
+    expect(builder.get(['notes', 0, 'text']).get(['notes', 0, 'text']).build()).toEqual({
+      projectionExpression: '#a0[0].#a1',
+      expressionAttributeNames: { '#a0': 'notes', '#a1': 'text' },
+    });
+  });
 });

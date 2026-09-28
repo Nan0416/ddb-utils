@@ -1,4 +1,5 @@
 import type { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
+import { AttributePath, pathKey, renderPath } from './attribute-path';
 import { AttributeNameSession, AttributeValueSession } from './attribute-session';
 import { ConditionExpressionBuilder } from './condition-expression-builder';
 import { InvalidDynamoDbUpdateRequestError } from './errors';
@@ -86,7 +87,7 @@ export class UpdateExpressionBuilder {
     this.conditionExpressionBuilder = new ConditionExpressionBuilder(this.attributeNameSession, this.attributeValueSession);
   }
 
-  set(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
+  set(path: AttributePath, value: NativeAttributeValue): UpdateExpressionBuilder {
     return this.with(path, { type: 'set', value: value });
   }
 
@@ -109,7 +110,7 @@ export class UpdateExpressionBuilder {
   }
 
   /** Writes the value only when the attribute is absent; an existing value is kept. */
-  setIfNotExists(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
+  setIfNotExists(path: AttributePath, value: NativeAttributeValue): UpdateExpressionBuilder {
     return this.with(path, { type: 'set_if_not_exists', value: value });
   }
 
@@ -118,7 +119,7 @@ export class UpdateExpressionBuilder {
    * attribute must exist, or DynamoDB rejects the update; with it, a missing attribute counts
    * from `initialValue`.
    */
-  increment(path: string | ReadonlyArray<string>, delta: number, initialValue?: number): UpdateExpressionBuilder {
+  increment(path: AttributePath, delta: number, initialValue?: number): UpdateExpressionBuilder {
     return this.with(path, { type: 'increment', delta: delta, initialValue: initialValue });
   }
 
@@ -130,7 +131,7 @@ export class UpdateExpressionBuilder {
    * @param failIfMissing @default false
    * @returns
    */
-  append(path: string | ReadonlyArray<string>, value: NativeAttributeValue, position?: 'start' | 'end', failIfMissing?: boolean) {
+  append(path: AttributePath, value: NativeAttributeValue, position?: 'start' | 'end', failIfMissing?: boolean) {
     return this.with(path, {
       type: 'list_append',
       value: value,
@@ -139,7 +140,7 @@ export class UpdateExpressionBuilder {
     });
   }
 
-  delete(path: string | ReadonlyArray<string>): UpdateExpressionBuilder {
+  delete(path: AttributePath): UpdateExpressionBuilder {
     return this.with(path, { type: 'delete' });
   }
 
@@ -148,7 +149,7 @@ export class UpdateExpressionBuilder {
    * or increments a number attribute. Uses the DynamoDB `ADD` update action.
    * Reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.UpdateExpressions.html#Expressions.UpdateExpressions.ADD
    */
-  addToSet(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
+  addToSet(path: AttributePath, value: NativeAttributeValue): UpdateExpressionBuilder {
     return this.with(path, { type: 'add_to_set', value: value });
   }
 
@@ -157,45 +158,32 @@ export class UpdateExpressionBuilder {
    * Uses the DynamoDB `DELETE` update action.
    * Reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.UpdateExpressions.html#Expressions.UpdateExpressions.DELETE
    */
-  deleteFromSet(path: string | ReadonlyArray<string>, value: NativeAttributeValue): UpdateExpressionBuilder {
+  deleteFromSet(path: AttributePath, value: NativeAttributeValue): UpdateExpressionBuilder {
     return this.with(path, { type: 'delete_from_set', value: value });
   }
 
   /**
    * Reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html#Expressions.ExpressionAttributeNames.NestedAttributes
    */
-  private with(path: string | ReadonlyArray<string>, op: Operation): UpdateExpressionBuilder {
-    if (typeof path === 'string') {
-      path = [path];
+  private with(path: AttributePath, op: Operation): UpdateExpressionBuilder {
+    const key = pathKey(path);
+    if (this.visitedPaths.has(key)) {
+      throw new InvalidDynamoDbUpdateRequestError(`Path ${key} is already in the update list.`);
     }
-
-    const pathIdentifier = path.join('.');
-
-    if (this.visitedPaths.has(pathIdentifier)) {
-      throw new InvalidDynamoDbUpdateRequestError(`Path ${pathIdentifier} is already in the update list.`);
-    }
-
-    this.visitedPaths.add(pathIdentifier);
-    const attributeNameIdentifiers: string[] = [];
-
-    path.forEach((segment) => {
-      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(segment);
-      attributeNameIdentifiers.push(attributeNameIdentifier);
-    });
+    this.visitedPaths.add(key);
+    const attributePath = renderPath(path, this.attributeNameSession);
 
     if (op.type === 'delete') {
-      this.removeStatements.push(attributeNameIdentifiers.join('.'));
+      this.removeStatements.push(attributePath);
     } else if (op.type === 'set') {
       const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.value);
       // if this is a nested path, ensure the top level exist before setting the value. Otherwise, it will throw
       // ValidationException: The document path provided in the update expression is invalid for update.
-      this.setStatements.push(`${attributeNameIdentifiers.join('.')} = ${valueIdentifier}`);
+      this.setStatements.push(`${attributePath} = ${valueIdentifier}`);
     } else if (op.type === 'set_if_not_exists') {
-      const attributePath = attributeNameIdentifiers.join('.');
       const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.value);
       this.setStatements.push(`${attributePath} = if_not_exists(${attributePath}, ${valueIdentifier})`);
     } else if (op.type === 'increment') {
-      const attributePath = attributeNameIdentifiers.join('.');
       let operand = attributePath;
       if (op.initialValue !== undefined) {
         const initialValueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.initialValue);
@@ -206,7 +194,6 @@ export class UpdateExpressionBuilder {
     } else if (op.type === 'list_append') {
       const value = Array.isArray(op.value) ? op.value : [op.value];
       const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(value);
-      const attributePath = attributeNameIdentifiers.join('.');
       let attributePathOperand = attributePath;
 
       if (op.allowListInit) {
@@ -221,10 +208,10 @@ export class UpdateExpressionBuilder {
       }
     } else if (op.type === 'add_to_set') {
       const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.value);
-      this.addStatements.push(`${attributeNameIdentifiers.join('.')} ${valueIdentifier}`);
+      this.addStatements.push(`${attributePath} ${valueIdentifier}`);
     } else if (op.type === 'delete_from_set') {
       const valueIdentifier = this.attributeValueSession.provideAttributeValueIdentifier(op.value);
-      this.deleteFromSetStatements.push(`${attributeNameIdentifiers.join('.')} ${valueIdentifier}`);
+      this.deleteFromSetStatements.push(`${attributePath} ${valueIdentifier}`);
     }
     return this;
   }

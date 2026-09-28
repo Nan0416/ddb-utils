@@ -1,4 +1,5 @@
 import type { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
+import { AttributePath } from './attribute-path';
 import { AttributeNameSession, AttributeValueSession } from './attribute-session';
 import { InvalidDynamoDbQueryRequestError, QueryConditionConflictError } from './errors';
 import { ProjectionExpressionBuilder } from './projection-expression-builder';
@@ -142,7 +143,7 @@ export class QueryExpressionBuilder {
     });
   }
 
-  project(path: string | ReadonlyArray<string>): QueryExpressionBuilder {
+  project(path: AttributePath): QueryExpressionBuilder {
     this.projectionExpressionBuilder.get(path);
     return this;
   }
