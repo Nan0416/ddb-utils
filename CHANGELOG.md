@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/Nan0416/ddb-utils/compare/v1.10.0...v1.11.0) (2026-09-28)
+
+
+### Features
+
+* condition operators, update helpers and nullable ItemParser readers ([#14](https://github.com/Nan0416/ddb-utils/issues/14)) ([e8f28a1](https://github.com/Nan0416/ddb-utils/commit/e8f28a16efce1b330bc91b495692fab7e6f45292))
+
 # [1.10.0](https://github.com/Nan0416/ddb-utils/compare/v1.9.0...v1.10.0) (2026-03-22)
 
 
