@@ -66,9 +66,13 @@ The update expression sent to DynamoDB is equivalent to
 | `delete(path)` | `REMOVE p` |
 | `addToSet(path, value)` / `deleteFromSet(path, value)` | `ADD p :v` / `DELETE p :v` |
 
+## Paths
+
+Every method that takes a path accepts an attribute name, or its segments as an array: a string segment is a map key and a number is a list index. `['notes', 3, 'noteId']` is `#a0[3].#a1`. An index is written into the expression, because DynamoDB accepts no placeholder for one.
+
 ## Conditions
 
-`ConditionExpressionBuilder` (and `UpdateExpressionBuilder.conditionExpressionBuilder`, `QueryExpressionBuilder.filterExpressionBuilder`) provides `equal`, `notEqual`, `lessThan`, `lessThanOrEqualTo`, `greaterThan`, `greaterThanOrEqualTo`, `between`, `beginsWith`, `contains`, `in` (1 to 100 values), `attributeExists`, `attributeNotExists`, combined with `and`, `or` and `not`. Values may be any DynamoDB value, `null` and lists included.
+`ConditionExpressionBuilder` (and `UpdateExpressionBuilder.conditionExpressionBuilder`, `QueryExpressionBuilder.filterExpressionBuilder`) provides `equal`, `notEqual`, `lessThan`, `lessThanOrEqualTo`, `greaterThan`, `greaterThanOrEqualTo`, `between`, `beginsWith`, `contains`, `in` (1 to 100 values), `attributeExists`, `attributeNotExists`, combined with `and`, `or` and `not`. `size(path)` is a left operand for the comparisons: `cond.equal(cond.size('holds'), 0)` is `size(#a0) = :v0`. Values may be any DynamoDB value, `null` and lists included.
 
 ## Reading items
 

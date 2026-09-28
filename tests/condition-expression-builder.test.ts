@@ -163,4 +163,20 @@ describe('ConditionExpressionBuilder', () => {
       expect(cond.expressionAttributeValues).toEqual({ ':v0': null, ':v1': ['a', 'b'] });
     });
   });
+
+  describe('size and list index paths', () => {
+    test('compares the size of an attribute', () => {
+      expect(cond.equal(cond.size('holds'), 0).expression).toBe('size(#a0) = :v0');
+      expect(cond.lessThan(cond.size(['meta', 'notes']), 50).expression).toBe('size(#a1.#a2) < :v1');
+    });
+
+    test('combines size with attribute_not_exists', () => {
+      const expression = cond.or(cond.attributeNotExists('holds'), cond.equal(cond.size('holds'), 0)).expression;
+      expect(expression).toBe('(attribute_not_exists(#a0)) OR (size(#a0) = :v0)');
+    });
+
+    test('addresses a list element', () => {
+      expect(cond.attributeNotExists(['line_outcomes', 4, 'inventory_uuid']).expression).toBe('attribute_not_exists(#a0[4].#a1)');
+    });
+  });
 });

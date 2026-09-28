@@ -1,3 +1,4 @@
+export type { AttributePath } from './attribute-path';
 export * from './update-expression-builder';
 export * from './condition-expression-builder';
 export * from './projection-expression-builder';

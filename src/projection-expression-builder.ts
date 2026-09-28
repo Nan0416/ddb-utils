@@ -1,3 +1,4 @@
+import { AttributePath, pathKey, renderPath } from './attribute-path';
 import { AttributeNameSession } from './attribute-session';
 import { InvalidDynamoDbProjectionRequestError } from './errors';
 
@@ -17,25 +18,14 @@ export class ProjectionExpressionBuilder {
     this.visitedPaths = new Set();
   }
 
-  get(path: string | ReadonlyArray<string>): ProjectionExpressionBuilder {
-    if (typeof path === 'string') {
-      path = [path];
-    }
-
-    const pathIdentifier = path.join('.');
-
-    if (this.visitedPaths.has(pathIdentifier)) {
+  get(path: AttributePath): ProjectionExpressionBuilder {
+    const key = pathKey(path);
+    if (this.visitedPaths.has(key)) {
       // already required.
       return this;
     }
-    this.visitedPaths.add(pathIdentifier);
-    const attributeNameIdentifiers: string[] = [];
-    path.forEach((segment) => {
-      const attributeNameIdentifier = this.attributeNameSession.provideAttributeNameIdentifier(segment);
-      attributeNameIdentifiers.push(attributeNameIdentifier);
-    });
-
-    this.expressions.push(attributeNameIdentifiers.join('.'));
+    this.visitedPaths.add(key);
+    this.expressions.push(renderPath(path, this.attributeNameSession));
     return this;
   }
 
