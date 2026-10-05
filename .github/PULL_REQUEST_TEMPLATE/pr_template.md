@@ -5,7 +5,7 @@ fix #
 
 
 ## Checklist before requesting a review
-- [ ] Does the first commit in the PR follow the Angular Commit Message Convention.
+- [ ] Does the PR title follow the Angular Commit Message Convention? PRs are squash-merged, and the title becomes the commit message that semantic-release reads.
 - [ ] Did you run `npm run format:fix`?
 - [ ] Is the PR a breaking change?
 
