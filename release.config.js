@@ -8,8 +8,8 @@ module.exports = {
       '@semantic-release/commit-analyzer',
       {
         preset: 'angular',
-        // Only feat and fix trigger releases. Other types (docs, chore, refactor, test, etc.)
-        // do not publish a new version — consumers don't benefit from those changes.
+        // Only feat, fix, and perf trigger releases (plus BREAKING CHANGE). Other types (docs, chore,
+        // refactor, test, etc.) do not publish a new version — consumers don't benefit from those changes.
         parserOpts: {
           noteKeywords: ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING'],
         },
